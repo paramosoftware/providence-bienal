@@ -28,10 +28,8 @@
  	 
 	$vo_result = $this->getVar('result');
 	
-	$this->setVar('tablename','ca_objects');
 	
  	print $this->render('Search/search_advanced_controls_html.php');
-	
  ?>
 	<div id="quickLookOverlay"> 
 		<div id="quickLookOverlayContent">
@@ -44,7 +42,6 @@
 	if($vo_result) {
 		$vs_view = $this->getVar('current_view');
 		if ($vo_result->numHits() == 0) { $vs_view = 'no_results'; }
-		if ($vs_view == 'editable') { $this->setVar('dontShowPages', true); }
 		print $this->render('Results/paging_controls_html.php');
 		print $this->render('Results/search_options_html.php');
 ?>
@@ -57,9 +54,6 @@
 				break;
 			case 'list':
 				print $this->render('Results/ca_objects_results_list_html.php');
-				break;
-			case 'editable':
-				print $this->render('Results/ca_objects_results_editable_html.php');
 				break;
 			case 'no_results':
 				print $this->render('Results/no_results_html.php');

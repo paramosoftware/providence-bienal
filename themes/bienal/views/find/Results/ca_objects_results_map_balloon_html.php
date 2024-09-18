@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2012 Whirl-i-Gig
+ * Copyright 2012-2020 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -40,7 +40,7 @@ foreach($va_ids as $vn_id) {
 	}
 ?>
 	<div id="mapBalloonText">
-	<?php print caNavLink($this->request, '<b>'.$t_object->get("ca_objects.idno").'</b>: '.$t_object->get("ca_objects.preferred_labels"), '', 'editor/objects', 'ObjectEditor', 'Edit', array('object_id' => $t_object->get("ca_objects.object_id"))); ?>
+	<?= caNavLink($this->request, '<b>'.$t_object->get("ca_objects.idno").'</b>: '.$t_object->get("ca_objects.preferred_labels"), '', 'editor/objects', 'ObjectEditor', 'Edit', array('object_id' => $t_object->get("ca_objects.object_id"))); ?>
 	</div><!-- end mapBalloonText -->
 </div><!-- end mapBallon -->
 <br/>

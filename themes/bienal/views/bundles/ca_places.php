@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2009-2017 Whirl-i-Gig
+ * Copyright 2009-2023 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -26,107 +26,131 @@
  * ----------------------------------------------------------------------
  */
  
-	AssetLoadManager::register('hierBrowser');
- 
-	$vs_id_prefix 		= $this->getVar('placement_code').$this->getVar('id_prefix');
-	$t_instance 		= $this->getVar('t_instance');
-	$t_item 			= $this->getVar('t_item');				// place
-	$t_item_rel 		= $this->getVar('t_item_rel');
-	$va_settings 		= $this->getVar('settings');
-	$vs_add_label 		= $this->getVar('add_label');
-	$va_rel_types		= $this->getVar('relationship_types');
-	$vs_placement_code 	= $this->getVar('placement_code');
-	$vn_placement_id	= (int)$va_settings['placement_id'];
-	$vb_batch			= $this->getVar('batch');
-	
-	$vs_color 			= 	((isset($va_settings['colorItem']) && $va_settings['colorItem'])) ? $va_settings['colorItem'] : '';
-	$vs_first_color 	= 	((isset($va_settings['colorFirstItem']) && $va_settings['colorFirstItem'])) ? $va_settings['colorFirstItem'] : '';
-	$vs_last_color 		= 	((isset($va_settings['colorLastItem']) && $va_settings['colorLastItem'])) ? $va_settings['colorLastItem'] : '';
-	
-	$vs_sort			=	((isset($va_settings['sort']) && $va_settings['sort'])) ? $va_settings['sort'] : '';
-	$vb_read_only		=	((isset($va_settings['readonly']) && $va_settings['readonly'])  || ($this->request->user->getBundleAccessLevel($t_instance->tableName(), 'ca_places') == __CA_BUNDLE_ACCESS_READONLY__));
-	$vb_dont_show_del	=	((isset($va_settings['dontShowDeleteButton']) && $va_settings['dontShowDeleteButton'])) ? true : false;
-	
-	$va_initial_values	= $this->getVar('initialValues');
-	
-	$vb_quick_add_enabled = $this->getVar('quickadd_enabled');
-	
-	// params to pass during occurrence lookup
-	$va_lookup_params = array(
-		'types' => isset($va_settings['restrict_to_types']) ? $va_settings['restrict_to_types'] : (isset($va_settings['restrict_to_type']) ? $va_settings['restrict_to_type'] : ''),
-		'noSubtypes' => (int)$va_settings['dont_include_subtypes_in_type_restriction'],
-		'noInline' => (!$vb_quick_add_enabled || (bool) preg_match("/QuickAdd$/", $this->request->getController())) ? 1 : 0
-	);
+AssetLoadManager::register('hierBrowser');
 
-	if ($vb_batch) {
-		print caBatchEditorRelationshipModeControl($t_item, $vs_id_prefix);
+$id_prefix 		= $this->getVar('placement_code').$this->getVar('id_prefix');
+$t_instance 	= $this->getVar('t_instance');
+$t_item 		= $this->getVar('t_item');				// place
+$t_item_rel 	= $this->getVar('t_item_rel');
+$t_subject 		= $this->getVar('t_subject');
+$settings 		= $this->getVar('settings');
+$add_label 		= $this->getVar('add_label');
+$rel_types		= $this->getVar('relationship_types');
+$placement_code = $this->getVar('placement_code');
+$placement_id	= (int)($settings['placement_id'] ?? 0);
+$batch			= $this->getVar('batch');
+
+$force_values 	= $this->getVar('forceValues');
+
+$color 			= caGetOption('colorItem', $settings, '');
+$first_color 	= caGetOption('colorFirstItem', $settings, '');
+$last_color 	= caGetOption('colorLastItem', $settings, '');
+
+$sort				= caGetOption('sort', $settings, '');
+$allow_drag_sort 	= caGetOption('allowDragSort', $settings, false);
+
+$read_only		= (caGetOption('readonly', $settings, false)  || ($this->request->user->getBundleAccessLevel($t_instance->tableName(), 'ca_places') == __CA_BUNDLE_ACCESS_READONLY__));
+$dont_show_del	= caGetOption('dontShowDeleteButton', $settings, false);
+
+$initial_values	= $this->getVar('initialValues');
+
+$quick_add_enabled = $this->getVar('quickadd_enabled');
+
+$dont_show_relationship_type = caGetOption('dontShowRelationshipTypes', $settings, false) ? 'none' : null; 
+
+// Dyamically loaded sort ordering
+$loaded_sort 			= $this->getVar('sort');
+$loaded_sort_direction 	= $this->getVar('sortDirection');
+
+$hier_browser_height 	= $settings['hierarchicalBrowserHeight'] ?? '200px';
+
+// params to pass during occurrence lookup
+$lookup_params = array(
+	'types' => caGetOption(['restrict_to_types', 'restrict_to_type'], $settings, ''),
+	'noSubtypes' => caGetOption('dont_include_subtypes_in_type_restriction', $settings, false, ['castTo' => 'bool']),
+	'noInline' => (!$quick_add_enabled || (bool) preg_match("/QuickAdd$/", $this->request->getController())) ? 1 : 0,
+	'self' => $t_instance->tableName().':'.$t_instance->getPrimaryKey()
+);
+
+
+$count = $this->getVar('relationship_count');
+$num_per_page = caGetOption('numPerPage', $settings, 10);
+
+if (!RequestHTTP::isAjax()) {
+	if(caGetOption('showCount', $settings, false)) { print $count ? "({$count})" : ''; }
+
+	if ($batch) {
+		print caBatchEditorRelationshipModeControl($t_item, $id_prefix);
 	} else {
-		print caEditorBundleShowHideControl($this->request, $vs_id_prefix.$t_item->tableNum().'_rel', $va_settings, caInitialValuesArrayHasValue($vs_id_prefix.$t_item->tableNum().'_rel', $this->getVar('initialValues')));
+		print caEditorBundleShowHideControl($this->request, $id_prefix, $settings, caInitialValuesArrayHasValue($id_prefix, $this->getVar('initialValues')));
 	}
-	print caEditorBundleMetadataDictionary($this->request, $vs_id_prefix.$t_item->tableNum().'_rel', $va_settings);
+	print caEditorBundleMetadataDictionary($this->request, $id_prefix, $settings);
+}
 
+$errors = array();
+foreach($action_errors = $this->request->getActionErrors($placement_code) as $o_error) {
+	$errors[] = $o_error->getErrorDescription();
+}
+
+$make_link = !caTemplateHasLinks(caGetOption('display_template', $settings, null));
+?>
+<div id="<?= $id_prefix; ?>" <?= $batch ? "class='editorBatchBundleContent'" : ''; ?>>
+<?php
 	print "<div class='bundleSubLabel'>";	
-	if(sizeof($this->getVar('initialValues'))) {
-		print caGetPrintFormatsListAsHTMLForRelatedBundles($vs_id_prefix, $this->request, $t_instance, $t_item, $t_item_rel, $this->getVar('initialValues'));
-	}
-	if(sizeof($this->getVar('initialValues')) && !$vb_read_only && !$vs_sort && ($va_settings['list_format'] != 'list')) {
-		print caEditorBundleSortControls($this->request, $vs_id_prefix, $t_item->tableName(), $va_settings);
+	if(is_array($this->getVar('initialValues')) && sizeof($this->getVar('initialValues'))) {
+		print caEditorBundleBatchEditorControls($this->request, $placement_id, $t_subject, $t_instance->tableName(), $settings);
+		print caGetPrintFormatsListAsHTMLForRelatedBundles($id_prefix, $this->request, $t_instance, $t_item, $t_item_rel, $placement_id);
+	
+		if(!$read_only) {
+			print caEditorBundleSortControls($this->request, $id_prefix, $t_item->tableName(), $t_instance->tableName(), array_merge($settings, ['sort' => $loaded_sort, 'sortDirection' => $loaded_sort_direction]));
+		}
 	}
 	print "<div style='clear:both;'></div></div><!-- end bundleSubLabel -->";
-	
-	$va_errors = array();
-	foreach($va_action_errors = $this->request->getActionErrors($vs_placement_code) as $o_error) {
-		$va_errors[] = $o_error->getErrorDescription();
-	}
-?>
-<div id="<?php print $vs_id_prefix.$t_item->tableNum().'_rel'; ?>" <?php print $vb_batch ? "class='editorBatchBundleContent'" : ''; ?>>
-<?php
+
 	//
 	// Template to generate display for existing items
 	//
 ?>
 	<textarea class='caItemTemplate' style='display: none;'>
 <?php
-	switch($va_settings['list_format']) {
+	switch($settings['list_format'] ?? null) {
 		case 'list':
 ?>
-		<div id="<?php print $vs_id_prefix; ?>Item_{n}" class="labelInfo listRel caRelatedItem">
+		<div id="<?= $id_prefix; ?>Item_{n}" class="labelInfo listRel caRelatedItem">
 <?php
-	if (!$vb_read_only && ca_editor_uis::loadDefaultUI($t_item_rel->tableNum(), $this->request)) {
-?><a href="#" class="caInterstitialEditButton listRelEditButton"><?php print caNavIcon(__CA_NAV_ICON_INTERSTITIAL_EDIT_BUNDLE__, "18px"); ?></a><?php
+	if (!$read_only && ca_editor_uis::loadDefaultUI($t_item_rel->tableNum(), $this->request)) {
+?><a href="#" class="caInterstitialEditButton listRelEditButton"><?= caNavIcon(__CA_NAV_ICON_INTERSTITIAL_EDIT_BUNDLE__, "18px"); ?></a><?php
 	}
-	if (!$vb_read_only && !$vb_dont_show_del) {
-?><a href="#" class="caDeleteItemButton listRelDeleteButton"><?php print caNavIcon(__CA_NAV_ICON_DEL_BUNDLE__, 1); ?></a><?php
+	if (!$read_only && !$dont_show_del) {
+?><a href="#" class="caDeleteItemButton listRelDeleteButton"><?= caNavIcon(__CA_NAV_ICON_DEL_BUNDLE__, 1); ?></a><?php
 	}
 ?>
-			<a href="<?php print urldecode(caEditorUrl($this->request, 'ca_occurrences', '{occurrence_id}')); ?>" class="caEditItemButton" id="<?php print $vs_id_prefix; ?>_edit_related_{n}"></a>
-			<span id='<?php print $vs_id_prefix; ?>_BundleTemplateDisplay{n}'>
+			<a href="<?= urldecode(caEditorUrl($this->request, 'ca_occurrences', '{occurrence_id}')); ?>" class="caEditItemButton" id="<?= $id_prefix; ?>_edit_related_{n}"></a>
+			<span id='<?= $id_prefix; ?>_BundleTemplateDisplay{n}'>
 <?php
-			print caGetRelationDisplayString($this->request, 'ca_places', array(), array('display' => '_display', 'makeLink' => false));
+			print caGetRelationDisplayString($this->request, 'ca_places', array('class' => 'caEditItemButton', 'id' => "{$id_prefix}_edit_related_{n}"), array('display' => '_display', 'makeLink' => $make_link, 'prefix' => $id_prefix, 'relationshipTypeDisplayPosition' => $dont_show_relationship_type));
 ?>
 			</span>
-			<input type="hidden" name="<?php print $vs_id_prefix; ?>_type_id{n}" id="<?php print $vs_id_prefix; ?>_type_id{n}" value="{type_id}"/>
-			<input type="hidden" name="<?php print $vs_id_prefix; ?>_id{n}" id="<?php print $vs_id_prefix; ?>_id{n}" value="{id}"/>
+			<input type="hidden" name="<?= $id_prefix; ?>_id{n}" id="<?= $id_prefix; ?>_id{n}" value="{id}"/>
 		</div>
 <?php
 			break;
 		case 'bubbles':
 		default:
 ?>
-		<div id="<?php print $vs_id_prefix; ?>Item_{n}" class="labelInfo roundedRel caRelatedItem">
-			<span id='<?php print $vs_id_prefix; ?>_BundleTemplateDisplay{n}'>
+		<div id="<?= $id_prefix; ?>Item_{n}" class="labelInfo roundedRel caRelatedItem">
+			<span id='<?= $id_prefix; ?>_BundleTemplateDisplay{n}'>
 <?php
-			print caGetRelationDisplayString($this->request, 'ca_places', array('class' => 'caEditItemButton', 'id' => "{$vs_id_prefix}_edit_related_{n}"), array('display' => '_display', 'makeLink' => true));
+			print caGetRelationDisplayString($this->request, 'ca_places', array('class' => 'caEditItemButton', 'id' => "{$id_prefix}_edit_related_{n}"), array('display' => '_display', 'makeLink' => $make_link, 'prefix' => $id_prefix, 'relationshipTypeDisplayPosition' => $dont_show_relationship_type));
 ?>
 			</span>
-			<input type="hidden" name="<?php print $vs_id_prefix; ?>_type_id{n}" id="<?php print $vs_id_prefix; ?>_type_id{n}" value="{type_id}"/>
-			<input type="hidden" name="<?php print $vs_id_prefix; ?>_id{n}" id="<?php print $vs_id_prefix; ?>_id{n}" value="{id}"/>
+			<input type="hidden" name="<?= $id_prefix; ?>_id{n}" id="<?= $id_prefix; ?>_id{n}" value="{id}"/>
 <?php
-	if (!$vb_read_only && ca_editor_uis::loadDefaultUI($t_item_rel->tableNum(), $this->request)) {
-?><a href="#" class="caInterstitialEditButton listRelEditButton"><?php print caNavIcon(__CA_NAV_ICON_INTERSTITIAL_EDIT_BUNDLE__, "16px"); ?></a><?php
+	if (!$read_only && ca_editor_uis::loadDefaultUI($t_item_rel->tableNum(), $this->request)) {
+?><a href="#" class="caInterstitialEditButton listRelEditButton"><?= caNavIcon(__CA_NAV_ICON_INTERSTITIAL_EDIT_BUNDLE__, "16px"); ?></a><?php
 	}
-	if (!$vb_read_only && !$vb_dont_show_del) {
-?><a href="#" class="caDeleteItemButton"><?php print caNavIcon(__CA_NAV_ICON_DEL_BUNDLE__, 1); ?></a><?php
+	if (!$read_only && !$dont_show_del) {
+?><a href="#" class="caDeleteItemButton"><?= caNavIcon(__CA_NAV_ICON_DEL_BUNDLE__, 1); ?></a><?php
 	}
 ?>			
 			<div style="display: none;" class="itemName">{label}</div>
@@ -143,97 +167,100 @@
 ?>
 	<textarea class='caNewItemTemplate' style='display: none;'>
 		<div style="clear: both; width: 1px; height: 1px;"><!-- empty --></div>
-		<div id="<?php print $vs_id_prefix; ?>Item_{n}" class="labelInfo caRelatedItem">
+		<div id="<?= $id_prefix; ?>Item_{n}" class="labelInfo caRelatedItem">
 <?php
-	if (!(bool)$va_settings['useHierarchicalBrowser']) {
+	if (!(bool)($settings['useHierarchicalBrowser'] ?? null)) {
 ?>
 			<table class="caListItem">
 				<tr>
 					<td>
-						<input type="text" size="60" name="<?php print $vs_id_prefix; ?>_autocomplete{n}" value="{{label}}" id="<?php print $vs_id_prefix; ?>_autocomplete{n}" class="lookupBg"/>
+						<input type="text" size="60" name="<?= $id_prefix; ?>_autocomplete{n}" value="{{label}}" id="<?= $id_prefix; ?>_autocomplete{n}" class="lookupBg"/>
 					</td>
 					<td>
-						<select name="<?php print $vs_id_prefix; ?>_type_id{n}" id="<?php print $vs_id_prefix; ?>_type_id{n}" style="display: none;"></select>
-						<input type="hidden" name="<?php print $vs_id_prefix; ?>_id{n}" id="<?php print $vs_id_prefix; ?>_id{n}" value="{id}"/>
+						<select name="<?= $id_prefix; ?>_type_id{n}" id="<?= $id_prefix; ?>_type_id{n}" style="display: none;"></select>
+						<input type="hidden" name="<?= $id_prefix; ?>_id{n}" id="<?= $id_prefix; ?>_id{n}" value="{id}"/>
 					</td>
 					<td>
-						<a href="#" class="caDeleteItemButton"><?php print caNavIcon(__CA_NAV_ICON_DEL_BUNDLE__, 1); ?></a>
+						<a href="#" class="caDeleteItemButton"><?= caNavIcon(__CA_NAV_ICON_DEL_BUNDLE__, 1); ?></a>
 						
-						<a href="<?php print urldecode(caEditorUrl($this->request, 'ca_places', '{place_id}')); ?>" class="caEditItemButton" id="<?php print $vs_id_prefix; ?>_edit_related_{n}"><?php print caNavIcon(__CA_NAV_ICON_GO__, 1); ?></a>
+						<a href="<?= urldecode(caEditorUrl($this->request, 'ca_places', '{place_id}')); ?>" class="caEditItemButton" id="<?= $id_prefix; ?>_edit_related_{n}"><?= caNavIcon(__CA_NAV_ICON_GO__, 1); ?></a>
 					</td>
 				</tr>
 			</table>
 <?php
 } else {
-		$vn_use_as_root_id = 'null';
-		if (sizeof($va_settings['restrict_to_lists']) == 1) {
+		$use_as_root_id = 'null';
+		if (is_array($settings['restrict_to_lists'] ?? null) && (sizeof($settings['restrict_to_lists']) == 1)) {
 			$t_item = new ca_list_items();
-			if ($t_item->load(array('list_id' => $va_settings['restrict_to_lists'][0], 'parent_id' => null))) {
-				$vn_use_as_root_id = $t_item->getPrimaryKey();
+			if ($t_item->load(array('list_id' => $settings['restrict_to_lists'][0], 'parent_id' => null))) {
+				$use_as_root_id = $t_item->getPrimaryKey();
 			}
 		} 
 		
-		if (!$vb_read_only && !$vb_dont_show_del) {
+		if (!$read_only && !$dont_show_del) {
 ?>
-			<div style="float: right;"><a href="#" class="caDeleteItemButton"><?php print caNavIcon(__CA_NAV_ICON_DEL_BUNDLE__, 1); ?></a></div>
+			<div style="float: right;"><a href="#" class="caDeleteItemButton"><?= caNavIcon(__CA_NAV_ICON_DEL_BUNDLE__, 1); ?></a></div>
 <?php
 	}
 ?>
-			<div style='width: 690px; height: <?php print $va_settings['hierarchicalBrowserHeight']; ?>;'>
-				
-				<div id='<?php print $vs_id_prefix; ?>_hierarchyBrowser{n}' style='width: 100%; height: 100%;' class='hierarchyBrowser'>
+			<div style='width: 700px; height: auto;'>
+				<div class='hierarchyBrowserSearchBar'><input type='text' id='<?= $id_prefix; ?>_hierarchyBrowserSearch{n}' class='hierarchyBrowserSearchBar' name='search' value='' size='40' placeholder=<?= json_encode(_t('Search')); ?>/></div>
+			
+				<div id='<?= $id_prefix; ?>_hierarchyBrowser{n}' style='width: 100%; height: <?= $hier_browser_height; ?>;' class='hierarchyBrowser'>
 					<!-- Content for hierarchy browser is dynamically inserted here by ca.hierbrowser -->
-				</div><!-- end hierarchyBrowser -->	</div>
+				</div>
+				
+				<div class="hierarchyBrowserRelationshipTypeSelection">
+					<select name="<?= $id_prefix; ?>_type_id{n}" id="<?= $id_prefix; ?>_type_id{n}" style="display: none;"></select>
+					<input type="hidden" name="<?= $id_prefix; ?>_id{n}" id="<?= $id_prefix; ?>_id{n}" value="{id}"/>
+				</div>	
+				<div class="hierarchyBrowserCurrentSelection">
+					<span class="hierarchyBrowserCurrentSelectionText" id="<?= $id_prefix; ?>_browseCurrentSelectionText{n}"></span>
+				</div>	
+				
+			</div><!-- end hierarchyBrowser -->	
 				
 			<div style="clear: both; width: 1px; height: 1px;"><!-- empty --></div>
-			<div style="float: right;">
-				<div class='hierarchyBrowserSearchBar'><?php print _t('Search'); ?>: <input type='text' id='<?php print $vs_id_prefix; ?>_hierarchyBrowserSearch{n}' class='hierarchyBrowserSearchBar' name='search' value='' size='40'/></div>
-			</div>
-			<div style="float: left;" class="hierarchyBrowserCurrentSelectionText">
-				<select name="<?php print $vs_id_prefix; ?>_type_id{n}" id="<?php print $vs_id_prefix; ?>_type_id{n}" style="display: none;"></select>
-				<input type="hidden" name="<?php print $vs_id_prefix; ?>_id{n}" id="<?php print $vs_id_prefix; ?>_id{n}" value="{id}"/>
-				
-				<span class="hierarchyBrowserCurrentSelectionText" id="<?php print $vs_id_prefix; ?>_browseCurrentSelectionText{n}"> </span>
-			</div>	
 			
 			<script type='text/javascript'>
 				jQuery(document).ready(function() { 
-					var <?php print $vs_id_prefix; ?>oHierBrowser{n} = caUI.initHierBrowser('<?php print $vs_id_prefix; ?>_hierarchyBrowser{n}', {
+					var <?= $id_prefix; ?>oHierBrowser{n} = caUI.initHierBrowser('<?= $id_prefix; ?>_hierarchyBrowser{n}', {
 						uiStyle: 'horizontal',
-						levelDataUrl: '<?php print caNavUrl($this->request, 'lookup', 'Place', 'GetHierarchyLevel', array()); ?>',
-						initDataUrl: '<?php print caNavUrl($this->request, 'lookup', 'Place', 'GetHierarchyAncestorList'); ?>',
+						levelDataUrl: '<?= caNavUrl($this->request, 'lookup', 'Place', 'GetHierarchyLevel', array()); ?>',
+						initDataUrl: '<?= caNavUrl($this->request, 'lookup', 'Place', 'GetHierarchyAncestorList'); ?>',
 						
 						selectOnLoad : true,
-						browserWidth: "<?php print $va_settings['hierarchicalBrowserWidth']; ?>",
+						browserWidth: "<?= $settings['hierarchicalBrowserWidth'] ?? 0; ?>",
 						
 						dontAllowEditForFirstLevel: false,
 						
 						className: 'hierarchyBrowserLevel',
 						classNameContainer: 'hierarchyBrowserContainer',
 						
-						editButtonIcon: "<?php print caNavIcon(__CA_NAV_ICON_RIGHT_ARROW__, 1); ?>",
+						editButtonIcon: "<?= caNavIcon(__CA_NAV_ICON_RIGHT_ARROW__, 1); ?>",
 						
-						//initItemID: <?php print (int)Session::getVar('ca_places_browse_last_id'); ?>,
-						useAsRootID: <?php print $vn_use_as_root_id; ?>,
-						indicator: "<?php print caNavIcon(__CA_NAV_ICON_SPINNER__, 1); ?>",
+						//initItemID: <?= (int)Session::getVar('ca_places_browse_last_id'); ?>,
+						useAsRootID: <?= $use_as_root_id; ?>,
+						indicator: "<?= caNavIcon(__CA_NAV_ICON_SPINNER__, 1); ?>",
 						
 						displayCurrentSelectionOnLoad: false,
-						currentSelectionDisplayID: '<?php print $vs_id_prefix; ?>_browseCurrentSelectionText{n}',
+						currentSelectionDisplayID: '<?= $id_prefix; ?>_browseCurrentSelectionText{n}',
+						currentSelectionDisplayPrefix: <?= json_encode('<span class="hierarchyBrowserCurrentSelectionHeader">'._t('Selected').'</span>: '); ?>,
 						onSelection: function(item_id, parent_id, name, display, type_id) {
-							caRelationBundle<?php print $vs_id_prefix; ?>.select('{n}', {id: item_id, type_id: type_id}, display);
+							caRelationBundle<?= $id_prefix; ?>.select('{n}', {id: item_id, type_id: type_id}, display);
 						}
 					});
 					
-					jQuery('#<?php print $vs_id_prefix; ?>_hierarchyBrowserSearch{n}').autocomplete(
+					jQuery('#<?= $id_prefix; ?>_hierarchyBrowserSearch{n}').autocomplete(
 						{
-							source: '<?php print caNavUrl($this->request, 'lookup', 'Place', 'Get', array('noInline' => 1)); ?>',
-							minLength: 3, delay: 800, html: true,
+							source: '<?= caNavUrl($this->request, 'lookup', 'Place', 'Get', array('noInline' => 1)); ?>',
+							minLength: <?= (int)$t_subject->getAppConfig()->get(["ca_entities_autocomplete_minimum_search_length", "autocomplete_minimum_search_length"]); ?>, delay: 800, html: true,
 							select: function(event, ui) {
 								if (parseInt(ui.item.id) > 0) {
-									<?php print $vs_id_prefix; ?>oHierBrowser{n}.setUpHierarchy(ui.item.id);	// jump browser to selected item
+									<?= $id_prefix; ?>oHierBrowser{n}.setUpHierarchy(ui.item.id);	// jump browser to selected item
 								}
 								event.preventDefault();
-								jQuery('#<?php print $vs_id_prefix; ?>_hierarchyBrowserSearch{n}').val('');
+								jQuery('#<?= $id_prefix; ?>_hierarchyBrowserSearch{n}').val('');
 							}
 						}
 					);
@@ -249,59 +276,60 @@
 	<div class="bundleContainer">
 		<div class="caItemList">
 <?php
-	if (sizeof($va_errors)) {
+	if (sizeof($errors)) {
 ?>
-		<span class="formLabelError"><?php print join("; ", $va_errors); ?><br class="clear"/></span>
+		<span class="formLabelError"><?= join("; ", $errors); ?><br class="clear"/></span>
 <?php
 	}
 ?>
 		
 		</div>
-		<input type="hidden" name="<?php print $vs_id_prefix; ?>BundleList" id="<?php print $vs_id_prefix; ?>BundleList" value=""/>
+		<div class="caNewItemList"></div>
+		<input type="hidden" name="<?= $id_prefix; ?>BundleList" id="<?= $id_prefix; ?>BundleList" value=""/>
 		<div style="clear: both; width: 1px; height: 1px;"><!-- empty --></div>
 <?php
-	if (!$vb_read_only) {
+	if (!$read_only) {
 ?>	
-		<div class='button labelInfo caAddItemButton'><a href='#'><?php print caNavIcon(__CA_NAV_ICON_ADD__, '15px'); ?> <?php print $vs_add_label ? $vs_add_label : _t("Add relationship"); ?></a></div>
+		<div class='button labelInfo caAddItemButton'><a href='#'><?= caNavIcon(__CA_NAV_ICON_ADD__, '15px'); ?> <?= $add_label ? $add_label : _t("Add relationship"); ?></a></div>
 <?php
 	}
 ?>
 	</div>
 </div>
 
-<?php if($vb_quick_add_enabled) { ?>
-<div id="caRelationQuickAddPanel<?php print $vs_id_prefix; ?>" class="caRelationQuickAddPanel"> 
-	<div id="caRelationQuickAddPanel<?php print $vs_id_prefix; ?>ContentArea">
-	<div class='dialogHeader'><?php print _t('Quick Add', $t_item->getProperty('NAME_SINGULAR')); ?></div>
+<?php if($quick_add_enabled) { ?>
+<div id="caRelationQuickAddPanel<?= $id_prefix; ?>" class="caRelationQuickAddPanel"> 
+	<div id="caRelationQuickAddPanel<?= $id_prefix; ?>ContentArea">
+	<div class='dialogHeader'><?= _t('Quick Add', $t_item->getProperty('NAME_SINGULAR')); ?></div>
 		
 	</div>
 </div>
 <?php } ?>
-<div id="caRelationEditorPanel<?php print $vs_id_prefix; ?>" class="caRelationQuickAddPanel"> 
-	<div id="caRelationEditorPanel<?php print $vs_id_prefix; ?>ContentArea">
-	<div class='dialogHeader'><?php print _t('Relation editor', $t_item->getProperty('NAME_SINGULAR')); ?></div>
+<div id="caRelationEditorPanel<?= $id_prefix; ?>" class="caRelationQuickAddPanel"> 
+	<div id="caRelationEditorPanel<?= $id_prefix; ?>ContentArea">
+	<div class='dialogHeader'><?= _t('Relation editor', $t_item->getProperty('NAME_SINGULAR')); ?></div>
 		
 	</div>
 	
 	<textarea class='caBundleDisplayTemplate' style='display: none;'>
-		<?php print caGetRelationDisplayString($this->request, 'ca_places', array(), array('display' => '_display', 'makeLink' => false)); ?>
+		<?= caGetRelationDisplayString($this->request, 'ca_places', array(), array('display' => '_display', 'makeLink' => false, 'relationshipTypeDisplayPosition' => $dont_show_relationship_type)); ?>
 	</textarea>
 </div>	
 	
 <script type="text/javascript">
-<?php if($vb_quick_add_enabled) { ?>
-	var caRelationQuickAddPanel<?php print $vs_id_prefix; ?>;
+<?php if($quick_add_enabled) { ?>
+	var caRelationQuickAddPanel<?= $id_prefix; ?>;
 <?php } ?>	
-	var caRelationBundle<?php print $vs_id_prefix; ?>;
+	var caRelationBundle<?= $id_prefix; ?>;
 	jQuery(document).ready(function() {
-		jQuery('#<?php print $vs_id_prefix; ?>caItemListSortControlTrigger').click(function() { jQuery('#<?php print $vs_id_prefix; ?>caItemListSortControls').slideToggle(200); return false; });
-		jQuery('#<?php print $vs_id_prefix; ?>caItemListSortControls a.caItemListSortControl').click(function() {jQuery('#<?php print $vs_id_prefix; ?>caItemListSortControls').slideUp(200); return false; });
+		jQuery('#<?= $id_prefix; ?>caItemListSortControlTrigger').click(function() { jQuery('#<?= $id_prefix; ?>caItemListSortControls').slideToggle(200); return false; });
+		jQuery('#<?= $id_prefix; ?>caItemListSortControls a.caItemListSortControl').click(function() {jQuery('#<?= $id_prefix; ?>caItemListSortControls').slideUp(200); return false; });
 		
 		if (caUI.initPanel) {
-<?php if($vb_quick_add_enabled) { ?>
-			caRelationQuickAddPanel<?php print $vs_id_prefix; ?> = caUI.initPanel({ 
-				panelID: "caRelationQuickAddPanel<?php print $vs_id_prefix; ?>",						/* DOM ID of the <div> enclosing the panel */
-				panelContentID: "caRelationQuickAddPanel<?php print $vs_id_prefix; ?>ContentArea",		/* DOM ID of the content area <div> in the panel */
+<?php if($quick_add_enabled) { ?>
+			caRelationQuickAddPanel<?= $id_prefix; ?> = caUI.initPanel({ 
+				panelID: "caRelationQuickAddPanel<?= $id_prefix; ?>",						/* DOM ID of the <div> enclosing the panel */
+				panelContentID: "caRelationQuickAddPanel<?= $id_prefix; ?>ContentArea",		/* DOM ID of the content area <div> in the panel */
 				exposeBackgroundColor: "#000000",				
 				exposeBackgroundOpacity: 0.7,					
 				panelTransitionSpeed: 400,						
@@ -315,9 +343,9 @@
 				}
 			});
 <?php } ?>
-			caRelationEditorPanel<?php print $vs_id_prefix; ?> = caUI.initPanel({ 
-				panelID: "caRelationEditorPanel<?php print $vs_id_prefix; ?>",						/* DOM ID of the <div> enclosing the panel */
-				panelContentID: "caRelationEditorPanel<?php print $vs_id_prefix; ?>ContentArea",		/* DOM ID of the content area <div> in the panel */
+			caRelationEditorPanel<?= $id_prefix; ?> = caUI.initPanel({ 
+				panelID: "caRelationEditorPanel<?= $id_prefix; ?>",						/* DOM ID of the <div> enclosing the panel */
+				panelContentID: "caRelationEditorPanel<?= $id_prefix; ?>ContentArea",		/* DOM ID of the content area <div> in the panel */
 				exposeBackgroundColor: "#000000",				
 				exposeBackgroundOpacity: 0.7,					
 				panelTransitionSpeed: 400,						
@@ -332,49 +360,65 @@
 			});
 		}
 		
-		caRelationBundle<?php print $vs_id_prefix; ?> = caUI.initRelationBundle('#<?php print $vs_id_prefix.$t_item->tableNum().'_rel'; ?>', {
-			fieldNamePrefix: '<?php print $vs_id_prefix; ?>_',
+		caRelationBundle<?= $id_prefix; ?> = caUI.initRelationBundle('#<?= $id_prefix; ?>', {
+			fieldNamePrefix: '<?= $id_prefix; ?>_',
+			formName: '<?= $this->getVar('id_prefix'); ?>',
 			templateValues: ['label', 'id', 'type_id', 'typename', 'idno', 'label', 'idno_sort'],
-			initialValues: <?php print json_encode($va_initial_values); ?>,
-			initialValueOrder: <?php print json_encode(array_keys($va_initial_values)); ?>,
-			itemID: '<?php print $vs_id_prefix; ?>Item_',
-			placementID: '<?php print $vn_placement_id; ?>',
+			initialValues: <?= json_encode($initial_values); ?>,
+			initialValueOrder: <?= json_encode(array_keys($initial_values)); ?>,
+			itemID: '<?= $id_prefix; ?>Item_',
+			placementID: '<?= $placement_id; ?>',
 			templateClassName: 'caNewItemTemplate',
 			initialValueTemplateClassName: 'caItemTemplate',
 			itemListClassName: 'caItemList',
+			newItemListClassName: 'caNewItemList',
 			listItemClassName: 'caRelatedItem',
 			addButtonClassName: 'caAddItemButton',
 			deleteButtonClassName: 'caDeleteItemButton',
-			hideOnNewIDList: ['<?php print $vs_id_prefix; ?>_edit_related_'],
+			hideOnNewIDList: ['<?= $id_prefix; ?>_edit_related_'],
 			showEmptyFormsOnLoad: 1,
-			relationshipTypes: <?php print json_encode($this->getVar('relationship_types_by_sub_type')); ?>,
-			autocompleteUrl: '<?php print caNavUrl($this->request, 'lookup', 'Place', 'Get', $va_lookup_params); ?>',
-			types: <?php print json_encode($va_settings['restrict_to_types']); ?>,
-			restrictToSearch: <?php print json_encode($va_settings['restrict_to_search']); ?>,
-			bundlePreview: <?php print caGetBundlePreviewForRelationshipBundle($this->getVar('initialValues')); ?>,
-			readonly: <?php print $vb_read_only ? "true" : "false"; ?>,
-			isSortable: <?php print ($vb_read_only || $vs_sort) ? "false" : "true"; ?>,
-			listSortOrderID: '<?php print $vs_id_prefix; ?>BundleList',
-			listSortItems: 'div.roundedRel',
-			autocompleteInputID: '<?php print $vs_id_prefix; ?>_autocomplete',
-<?php if($vb_quick_add_enabled) { ?>
-			quickaddPanel: caRelationQuickAddPanel<?php print $vs_id_prefix; ?>,
-			quickaddUrl: '<?php print caNavUrl($this->request, 'editor/places', 'PlaceQuickAdd', 'Form', array('place_id' => 0, 'dont_include_subtypes_in_type_restriction' => (int)$va_settings['dont_include_subtypes_in_type_restriction'], 'prepopulate_fields' => join(";", $va_settings['prepopulateQuickaddFields']))); ?>',
+			minChars: <?= (int)$t_subject->getAppConfig()->get(["ca_places_autocomplete_minimum_search_length", "autocomplete_minimum_search_length"]); ?>,
+			relationshipTypes: <?= json_encode($this->getVar('relationship_types_by_sub_type')); ?>,
+			autocompleteUrl: '<?= caNavUrl($this->request, 'lookup', 'Place', 'Get', $lookup_params); ?>',
+			types: <?= json_encode($settings['restrict_to_types'] ?? null); ?>,
+			restrictToAccessPoint: <?= json_encode($settings['restrict_to_access_point'] ?? null); ?>,
+			restrictToSearch: <?= json_encode($settings['restrict_to_search'] ?? null); ?>,
+			bundlePreview: <?= caGetBundlePreviewForRelationshipBundle($this->getVar('initialValues')); ?>,
+			readonly: <?= $read_only ? "true" : "false"; ?>,
+			isSortable: <?= ($allow_drag_sort ? "true" : "false"); ?>,
+			listSortOrderID: '<?= $id_prefix; ?>BundleList',
+			listSortItems: 'div.roundedRel,div.listRel',
+			autocompleteInputID: '<?= $id_prefix; ?>_autocomplete',
+<?php if($quick_add_enabled) { ?>
+			quickaddPanel: caRelationQuickAddPanel<?= $id_prefix; ?>,
+			quickaddUrl: '<?= caNavUrl($this->request, 'editor/places', 'PlaceQuickAdd', 'Form', array('place_id' => 0, 'dont_include_subtypes_in_type_restriction' => (int)($settings['dont_include_subtypes_in_type_restriction'] ?? 0), 'prepopulate_fields' => join(";", $settings['prepopulateQuickaddFields'] ?? []))); ?>',
 <?php } ?>
-			sortUrl: '<?php print caNavUrl($this->request, $this->request->getModulePath(), $this->request->getController(), 'Sort', array('table' => $t_item_rel->tableName())); ?>',
+			sortUrl: '<?= caNavUrl($this->request, $this->request->getModulePath(), $this->request->getController(), 'Sort', array('table' => $t_item_rel->tableName())); ?>',
+			
+			loadedSort: <?= json_encode($loaded_sort); ?>,
+			loadedSortDirection: <?= json_encode($loaded_sort_direction); ?>,
 			
 			interstitialButtonClassName: 'caInterstitialEditButton',
-			interstitialPanel: caRelationEditorPanel<?php print $vs_id_prefix; ?>,
-			interstitialUrl: '<?php print caNavUrl($this->request, 'editor', 'Interstitial', 'Form', array('t' => $t_item_rel->tableName())); ?>',
-			interstitialPrimaryTable: '<?php print $t_instance->tableName(); ?>',
-			interstitialPrimaryID: <?php print (int)$t_instance->getPrimaryKey(); ?>,
+			interstitialPanel: caRelationEditorPanel<?= $id_prefix; ?>,
+			interstitialUrl: '<?= caNavUrl($this->request, 'editor', 'Interstitial', 'Form', array('t' => $t_item_rel->tableName())); ?>',
+			interstitialPrimaryTable: '<?= $t_instance->tableName(); ?>',
+			interstitialPrimaryID: <?= (int)$t_instance->getPrimaryKey(); ?>,
 			
-			itemColor: '<?php print $vs_color; ?>',
-			firstItemColor: '<?php print $vs_first_color; ?>',
-			lastItemColor: '<?php print $vs_last_color; ?>',
+			itemColor: '<?= $color; ?>',
+			firstItemColor: '<?= $first_color; ?>',
+			lastItemColor: '<?= $last_color; ?>',
 			
-			minRepeats: <?php print caGetOption('minRelationshipsPerRow', $va_settings, 0); ?>,
-			maxRepeats: <?php print caGetOption('maxRelationshipsPerRow', $va_settings, 65535); ?>
+			totalValueCount: <?= (int)$count; ?>,
+			partialLoadUrl: '<?= caNavUrl($this->request, '*', '*', 'loadBundleValues', array($t_subject->primaryKey() => $t_subject->getPrimaryKey(), 'placement_id' => $placement_id, 'bundle' => 'ca_places')); ?>',
+			partialLoadIndicator: '<?= addslashes(caBusyIndicatorIcon($this->request)); ?>',
+			loadSize: <?= $num_per_page; ?>,
+			
+			minRepeats: <?= caGetOption('minRelationshipsPerRow', $settings, 0); ?>,
+			maxRepeats: <?= caGetOption('maxRelationshipsPerRow', $settings, 65535); ?>,
+			
+			isSelfRelationship:<?= ($t_item_rel && $t_item_rel->isSelfRelationship()) ? 'true' : 'false'; ?>,
+			subjectTypeID: <?= (int)$t_subject->getTypeID(); ?>,
+			forceNewRelationships: <?= json_encode($force_values); ?>
 		});
 	});
 </script>

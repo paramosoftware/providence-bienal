@@ -25,6 +25,7 @@
 	padding:0px;
 }
 .setItem {
+    cursor: move;
 	position: relative;
 	display: block;
 	list-style-type: none;
@@ -42,10 +43,6 @@
 }
 
 .setItems a{
-	cursor:move;
-}
-
-.setItems a{
 	color: #636363;
 }
 .setItemThumbnail a {
@@ -58,7 +55,7 @@
 	background-size: 16px 16px;
 }
 .setItems .remove .fa:hover {
-	color:red;
+	color:#EB0000;
 }
 .setItems .remove a{
 	font-size: 9px;

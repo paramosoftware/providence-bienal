@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2008-2015 Whirl-i-Gig
+ * Copyright 2008-2023 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -35,6 +35,8 @@
 	$vs_rel_table		= $this->getVar('rel_table');
 	$vn_rel_type_id		= $this->getVar('rel_type_id');
 	$vn_rel_id			= $this->getVar('rel_id');
+	
+	$forced_values 		= $this->getVar('forced_values') ?? [];
 
 	if ($vb_can_edit) {
 		$va_cancel_parameters = ($vn_occurrence_id ? array('occurrence_id' => $vn_occurrence_id) : array('type_id' => $t_occurrence->getTypeID()));
@@ -42,7 +44,7 @@
 			caFormSubmitButton($this->request, __CA_NAV_ICON_SAVE__, _t("Save"), 'OccurrenceEditorForm').' '.
 			($this->getVar('show_save_and_return') ? caFormSubmitButton($this->request, __CA_NAV_ICON_SAVE__, _t("Save and return"), 'OccurrenceEditorForm', array('isSaveAndReturn' => true)) : '').' '.
 			caFormNavButton($this->request, __CA_NAV_ICON_CANCEL__, _t("Cancel"), '', 'editor/occurrences', 'OccurrenceEditor', 'Edit/'.$this->request->getActionExtra(), $va_cancel_parameters),
-			'', 
+			($this->getVar('show_show_notifications') ? caFormJSButton($this->request, __CA_NAV_ICON_ALERT__, _t("Show editor alerts"), '', ['class' => 'caEditorFormNotifications']) : ''), 
 			((intval($vn_occurrence_id) > 0) && $vb_can_delete) ? caFormNavButton($this->request, __CA_NAV_ICON_DELETE__, _t("Delete"), '', 'editor/occurrences', 'OccurrenceEditor', 'Delete/'.$this->request->getActionExtra(), array('occurrence_id' => $vn_occurrence_id)) : ''
 		);
 	}
@@ -53,18 +55,19 @@
 			
 			$va_form_elements = $t_occurrence->getBundleFormHTMLForScreen($this->request->getActionExtra(), array(
 									'request' => $this->request, 
-									'formName' => 'OccurrenceEditorForm'), $va_bundle_list);
+									'formName' => 'OccurrenceEditorForm',
+									'forcedValues' => $forced_values), $va_bundle_list);
 			
 			print join("\n", $va_form_elements);
 			
 			if ($vb_can_edit) { print $vs_control_box; }
 ?>
-			<input type='hidden' name='occurrence_id' value='<?php print $vn_occurrence_id; ?>'/>
-			<input type='hidden' name='above_id' value='<?php print $vn_above_id; ?>'/>
+			<input type='hidden' name='occurrence_id' value='<?= $vn_occurrence_id; ?>'/>
+			<input type='hidden' name='above_id' value='<?= $vn_above_id; ?>'/>
 			<input id='isSaveAndReturn' type='hidden' name='is_save_and_return' value='0'/>
-			<input type='hidden' name='rel_table' value='<?php print $vs_rel_table; ?>'/>
-			<input type='hidden' name='rel_type_id' value='<?php print $vn_rel_type_id; ?>'/>
-			<input type='hidden' name='rel_id' value='<?php print $vn_rel_id; ?>'/>
+			<input type='hidden' name='rel_table' value='<?= $vs_rel_table; ?>'/>
+			<input type='hidden' name='rel_type_id' value='<?= $vn_rel_type_id; ?>'/>
+			<input type='hidden' name='rel_id' value='<?= $vn_rel_id; ?>'/>
 <?php
 			if($this->request->getParameter('rel', pInteger)) {
 ?>
@@ -77,4 +80,4 @@
 
 	<div class="editorBottomPadding"><!-- empty --></div>
 	
-	<?php print caSetupEditorScreenOverlays($this->request, $t_occurrence, $va_bundle_list); ?>
+	<?= caSetupEditorScreenOverlays($this->request, $t_occurrence, $va_bundle_list); ?>

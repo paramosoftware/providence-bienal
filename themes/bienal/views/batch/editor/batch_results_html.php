@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2012 Whirl-i-Gig
+ * Copyright 2012-2021 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -27,7 +27,7 @@
  */
 	AssetLoadManager::register("sortableUI");
 ?>
-<h1><?php print _t('Batch processing status'); ?></h1>
+<h1><?= _t('Batch processing status'); ?></h1>
 
 
 <div class="batchProcessingTableProgressGroup">
@@ -44,7 +44,7 @@
 <div class="editorBottomPadding"><!-- empty --></div>
 
 <div id="batchProcessingMore">
-	<?php print caNavLink($this->request, _t('Perform another batch edit'), '', 'batch', 'Editor', 'Edit/'.$this->request->getActionExtra(), array('set_id' => $this->getVar('set_id'))); ?>
+	<?= caNavLink($this->request, _t('Perform another batch edit'), '', 'batch', 'Editor', 'Edit/'.$this->request->getActionExtra(), ['id' => $this->getVar('id')]); ?>
 </div>
 	
 <script type="text/javascript">

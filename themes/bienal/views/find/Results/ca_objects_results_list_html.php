@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2009-2016 Whirl-i-Gig
+ * Copyright 2009-2022 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -35,7 +35,6 @@
 	$vo_ar					= $this->getVar('access_restrictions');
 	$vs_current_sort_dir    = $this->getVar('current_sort_direction');
 	$vn_start				= (int)$this->getVar('start');
-	
 ?>
 <div id="scrollingResults">
 	<form id="caFindResultsForm">
@@ -46,17 +45,20 @@
 				<input type='checkbox' name='record' value='' id='addItemToSetSelectAllControl' class='addItemToSetControl' onchange="jQuery('.addItemToSetControl').attr('checked', (jQuery('#addItemToSetSelectAllControl').attr('checked') == 'checked'));"/>
 			</th>
 			<th class='list-header-nosort'>
-				<?php print ($vs_default_action	== "Edit" ? _t("Edit") : _t("View")); ?>
+				<?= ($vs_default_action	== "Edit" ? _t("Edit") : _t("View")); ?>
 			</th>
 <?php
 			// output headers
 			$vn_id_count = 0;
 			foreach($va_display_list as $va_display_item) {
+				$va_display_item['display'] = $va_display_item['display'] ?? null;
+				$va_display_item['bundle_sort'] = $va_display_item['bundle_sort'] ?? null;
+				
 				$vs_item_display_str =
 					((mb_strlen($va_display_item['display']) > 30) ? strip_tags(mb_substr($va_display_item['display'], 0, 27))."..." : $va_display_item['display']);
 
-				if ($va_display_item['is_sortable']) {
-					if ($vs_current_sort == $va_display_item['bundle_sort']) {
+				if ($va_display_item['is_sortable'] ?? false) {
+					if ($vs_current_sort == ($va_display_item['bundle_sort'] ?? null)) {
 						if($vs_current_sort_dir == 'desc') {
 							$vs_th_class = 'list-header-sorted-desc';
 							$vs_new_sort_direction = 'asc';
@@ -66,7 +68,7 @@
 						}
 
 						print "<th class='{$vs_th_class}'><span id='listHeader".$vn_id_count."'><nobr>".
-							caNavLink($this->request, $vs_item_display_str, '', $this->request->getModulePath(), $this->request->getController(), 'Index', array('sort' => $va_display_item['bundle_sort'], 'direction' => $vs_new_sort_direction))
+							caNavLink($this->request, $vs_item_display_str, '', $this->request->getModulePath(), $this->request->getController(), 'Index', array('sort' => $va_display_item['bundle_sort'] ?? null, 'direction' => $vs_new_sort_direction))
 						."</nobr></span></th>";
 						TooltipManager::add('#listHeader'.$vn_id_count , _t("Currently sorting by ").$va_display_item['display']);
 					} else {
@@ -90,16 +92,16 @@
 				
 				($i == 2) ? $i = 0 : "";
 ?>
-				<tr <?php print ($i ==1) ? "class='odd'" : ""; ?>>
+				<tr <?= ($i ==1) ? "class='odd'" : ""; ?>>
 					<td class="addItemToSetControl">
-						<input type='checkbox' name='add_to_set_ids' value='<?php print (int)$vn_object_id; ?>' class="addItemToSetControl" />
-						<div><?php print $vn_start + $vn_item_count + 1; ?></div>
+						<input type='checkbox' name='add_to_set_ids' value='<?= (int)$vn_object_id; ?>' class="addItemToSetControl" />
+						<div><?= $vn_start + $vn_item_count + 1; ?></div>
 					</td>
 <?php
 					print "<td style='width:5%;'>".caEditorLink($this->request, caNavIcon(__CA_NAV_ICON_EDIT__, 2), '', 'ca_objects', $vn_object_id, array(), array())."</td>";
 						
-					foreach($va_display_list as $vn_placement_id => $va_info) {
-                        print "<td><span class=\"read-more\">".$t_display->getDisplayValue($vo_result, $vn_placement_id, array_merge(array('request' => $this->request), is_array($va_info['settings']) ? $va_info['settings'] : array()))."</span></td>";
+					foreach($va_display_list as $placement_id => $info) {
+                        print "<td><span class=\"read-more\">".$t_display->getDisplayValue($vo_result, ($placement_id > 0) ? $placement_id : $info['bundle_name'] ?? null, array_merge(array('request' => $this->request), is_array($info['settings'] ?? null) ? $info['settings'] : []))."</span></td>";
                     }
 ?>	
 				</tr>
@@ -114,9 +116,9 @@
 			if (is_array($va_bottom_line = $this->getVar('bottom_line'))) {
 ?>
 					<tr>
-						<td colspan="2" class="listtableTotals"><?php print _t('Totals'); ?></td>
+						<td colspan="2" class="listtableTotals"><?= _t('Totals'); ?></td>
 <?php
-						foreach($va_bottom_line as $vn_placement_id => $vs_bottom_line_value) {
+						foreach($va_bottom_line as $placement_id => $vs_bottom_line_value) {
 							print "<td>{$vs_bottom_line_value}</td>";
 						}
 ?>
@@ -126,7 +128,7 @@
 			if ($vs_bottom_line_totals = $this->getVar('bottom_line_totals')) {
 ?>				
 					<tr>
-						<td colspan="<?php print sizeof($va_display_list) + 2; ?>" class="listtableAggregateTotals"><?php print $vs_bottom_line_totals; ?></td>
+						<td colspan="<?= sizeof($va_display_list) + 2; ?>" class="listtableAggregateTotals"><?= $vs_bottom_line_totals; ?></td>
 					</tr>
 <?php		
 			}

@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2014 Whirl-i-Gig
+ * Copyright 2014-2020 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -43,12 +43,12 @@
 ?>
 
 <div class="caMediaOverlayControls">
-	<div class="objectInfo"><?php print "{$vs_media_type}; ".caGetRepresentationDimensionsForDisplay($t_rep, 'original'); ?></div>
-	<div class='close'><a href="#" onclick="caMediaPanel.hidePanel(); return false;" title="close">&nbsp;&nbsp;&nbsp;</a></div>
+	<div class='close'><a href="#" onclick="caMediaPanel.hidePanel(); return false;" title="close"><?= caNavIcon(__CA_NAV_ICON_CLOSE__, "18px", [], ['color' => 'white']).' '._t('Close'); ?></a></div>
+	<div class="objectInfo"><?= "{$vs_media_type}; ".caGetRepresentationDimensionsForDisplay($t_rep, 'original'); ?></div>
 </div>
 	
-<div class="caObjectRepresentationSetCenterContainer" style="width: <?php print $vn_image_width; ?>px; height: <?php print $vn_image_height; ?>px;">
-<img src="<?php print $this->request->getThemeUrlPath(); ?>/graphics/icons/blu-pointer.png" id="caObjectRepresentationSetCenterMarker"/>
+<div class="caObjectRepresentationSetCenterContainer" style="width: <?= $vn_image_width; ?>px; height: <?= $vn_image_height; ?>px;">
+<div id="caObjectRepresentationSetCenterMarker"><?= caNavIcon(__CA_NAV_ICON_CROSSHAIRS__, 3); ?></div>
 <?php
 	print $this->getVar('image');
 ?>
@@ -56,6 +56,6 @@
 
 <script type="text/javascript">
 	jQuery(document).ready(function() {
-		jQuery("#caObjectRepresentationSetCenterMarker").css("top", <?php print $vn_center_y_pixel; ?> + "px").css("left", <?php print $vn_center_x_pixel; ?> + "px").draggable({'containment' : 'parent'});
+		jQuery("#caObjectRepresentationSetCenterMarker").css("top", <?= $vn_center_y_pixel; ?> + "px").css("left", <?= $vn_center_x_pixel; ?> + "px").draggable({'containment' : 'parent'});
 	});
 </script>

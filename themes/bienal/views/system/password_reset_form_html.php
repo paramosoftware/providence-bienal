@@ -32,13 +32,11 @@ $vs_username = $this->getVar('username');
 ?>
 <html>
 <head>
-	<title><?php print $this->request->config->get("app_display_name"); ?></title>
+	<title><?= $this->request->config->get("app_display_name"); ?></title>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 
-	<link href="<?php print $this->request->getThemeUrlPath(); ?>/css/login.css" rel="stylesheet" type="text/css" />
-	<?php
-	print AssetLoadManager::getLoadHTML($this->request);
-	?>
+	<link href="<?= caGetThemeUrlPath() ?>/css/login.css" rel="stylesheet" type="text/css" />
+	<?= AssetLoadManager::getLoadHTML($this->request); ?>
 
 	<script type="text/javascript">
 		// initialize CA Utils
@@ -49,7 +47,7 @@ $vs_username = $this->getVar('username');
 <div align="center">
 	<div id="loginBox">
 		<div align="center">
-			<img src="<?php print $this->request->getThemeUrlPath()."/graphics/logos/".$this->request->config->get('login_logo');?>" border="0">
+			<?= caGetDefaultLogo(); ?>
 		</div>
 		<div id="systemTitle">
 
@@ -74,22 +72,22 @@ $vs_username = $this->getVar('username');
 		</div><!-- end  systemTitle -->
 		<div id="loginForm">
 <?php if($vb_render) { ?>
-			<?php print caFormTag($this->request, 'DoReset', 'reset'); ?>
-			<div class="loginFormElement"><?php print _t("Password"); ?>:<br/>
+			<?= caFormTag($this->request, 'DoReset', 'reset'); ?>
+			<div class="loginFormElement"><?= _t("Password"); ?>:<br/>
 				<input type="password" name="password" size="25"/>
 			</div>
-			<div class="loginFormElement"><?php print _t("Re-type password"); ?>:<br/>
+			<div class="loginFormElement"><?= _t("Re-type password"); ?>:<br/>
 				<input type="password" name="password2" size="25"/>
 			</div>
 <?php 	if(strlen($vs_token)>0){ ?>
-			<input type="hidden" name="token" value="<?php print $vs_token; ?>"/>
-			<input type="hidden" name="username" value="<?php print $vs_username; ?>"/>
+			<input type="hidden" name="token" value="<?= $vs_token; ?>"/>
+			<input type="hidden" name="username" value="<?= $vs_username; ?>"/>
 <?php 	} ?>
 
-			<div class="loginSubmitButton"><?php print caFormSubmitButton($this->request, __CA_NAV_ICON_LOGIN__, _t("Submit"),"reset", array('icon_position' => __CA_NAV_ICON_ICON_POS_RIGHT__)); ?></div>
+			<div class="loginSubmitButton"><?= caFormSubmitButton($this->request, __CA_NAV_ICON_LOGIN__, _t("Submit"),"reset", array('icon_position' => __CA_NAV_ICON_ICON_POS_RIGHT__)); ?></div>
 			</form>
 <?php } ?>
-			<?php print caNavLink($this->request, _t("Back to login"), 'loginLink', 'system/auth', 'login', ''); ?>
+			<?= caNavLink($this->request, _t("Back to login"), 'loginLink', 'system/auth', 'login', ''); ?>
 		</div><!-- end loginForm -->
 	</div><!-- end loginBox -->
 </div><!-- end center -->

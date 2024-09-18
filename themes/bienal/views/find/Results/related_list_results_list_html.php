@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2016 Whirl-i-Gig
+ * Copyright 2016-2023 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -26,37 +26,35 @@
  * ----------------------------------------------------------------------
  */
 
-	/** @var ca_bundle_displays $t_display */
-	$t_display				= $this->getVar('t_display');
-	$va_display_list 		= $this->getVar('display_list');
-	/** @var EntitySearchResult $vo_result */
-	$vo_result 				= $this->getVar('result');
-	$vn_items_per_page 		= $this->getVar('current_items_per_page');
-	$vs_current_sort 		= $this->getVar('current_sort');
-	$vs_current_sort_dir    = $this->getVar('current_sort_direction');
-	$vs_default_action		= $this->getVar('default_action');
-	$vo_ar					= $this->getVar('access_restrictions');
-	$va_rel_id_typenames 	= $this->getVar('relationIdTypeNames');
-	$va_rel_id_index	 	= $this->getVar('relationIDsToRelatedIDs');
+/** @var ca_bundle_displays $t_display */
+$t_display				= $this->getVar('t_display');
+$va_display_list 		= $this->getVar('display_list');
+/** @var EntitySearchResult $vo_result */
+$vo_result 				= $this->getVar('result');
+$vn_items_per_page 		= $this->getVar('current_items_per_page');
+$vs_current_sort 		= $this->getVar('current_sort');
+$vs_current_sort_dir    = $this->getVar('current_sort_direction');
+$vs_default_action		= $this->getVar('default_action');
+$vo_ar					= $this->getVar('access_restrictions');
+$va_rel_id_typenames 	= $this->getVar('relationIdTypeNames');
+$va_rel_id_index	 	= $this->getVar('relationIDsToRelatedIDs');
 
-	$vs_interstitial_prefix	= $this->getVar('interstitialPrefix');
-	$vs_primary_table		= $this->getVar('primaryTable');
-	$vn_primary_id			= $this->getVar('primaryID');
-	$vs_related_table		= $this->getVar('relatedTable');
-	$vs_related_rel_table	= $this->getVar('relatedRelTable');
-	/** @var BundlableLabelableBaseModelWithAttributes $t_related_instance */
-	$t_related_instance		= $this->getVar('relatedInstance');
-
+$vs_interstitial_prefix	= $this->getVar('interstitialPrefix');
+$vs_primary_table		= $this->getVar('primaryTable');
+$vn_primary_id			= $this->getVar('primaryID');
+$vs_related_table		= $this->getVar('relatedTable');
+$vs_related_rel_table	= $this->getVar('relatedRelTable');
+/** @var BundlableLabelableBaseModelWithAttributes $t_related_instance */
+$t_related_instance		= $this->getVar('relatedInstance');
 ?>
 <div id="scrollingResults">
-	<form id="caFindResultsForm<?php print $vs_interstitial_prefix; ?>">
-		<table id="<?php print $vs_interstitial_prefix; ?>RelatedList" class="listtable" width="100%" border="0" cellpadding="0" cellspacing="1">
+	<form id="caFindResultsForm<?= $vs_interstitial_prefix; ?>">
+		<table id="<?= $vs_interstitial_prefix; ?>RelatedList" class="listtable attributeListItem" width="100%" border="0" cellpadding="0" cellspacing="1">
 			<thead>
 			<tr>
-			<th style="width:10px; text-align:center;" class='list-header-nosort'><!-- column for interstitial and delete buttons --></th>
-			<th class='list-header-nosort'>
-				<?php print ($vs_default_action	== "Edit" ? _t("Edit") : _t("View")); ?>
-			</th>
+			<th></th>
+			<th style="width:10px; text-align:center;" class='list-header-nosort'><!-- column for edit/view button --></th>
+			<th style="width:10px; text-align:center;" class='list-header-nosort'><!-- column for interstitial buttons --></th>
 			<th style="text-align:center;" class='list-header-nosort'></th>
 <?php
 			// output headers
@@ -90,6 +88,7 @@
 				$vn_id_count++;
 			}
 ?>
+				<th></th>
 			</tr></thead><tbody>
 <?php
 			$i = 0;
@@ -102,16 +101,16 @@
 				($i == 2) ? $i = 0 : "";
 ?>
 
-				<tr <?php print ($i ==1) ? "class='odd'" : ""; ?> <?php print "id='{$vs_interstitial_prefix}{$vn_relation_id}'"; ?>>
-					<td style="width:10px">
-						<a href="#" class="caInterstitialEditButton listRelEditButton"><?php print caNavIcon(__CA_NAV_ICON_INTERSTITIAL_EDIT_BUNDLE__, "16px"); ?></a>
-						<a href="#" class="caDeleteItemButton listRelDeleteButton"><?php print caNavIcon(__CA_NAV_ICON_DEL_BUNDLE__, 1); ?></a>
+				<tr <?= ($i ==1) ? "class='odd'" : ""; ?> <?= "id='{$vs_interstitial_prefix}{$vn_relation_id}'"; ?>>
+					<td style="width:10px" class="addItemToBatchControl">
+						<?= caHTMLCheckboxInput('selected_ids', ['value' => $vn_id, 'class' => 'addItemToBatchControl dontTriggerUnsavedChangeWarning', 'id' =>'selectedId'.$vn_id], []); ?>
 					</td>
-<?php
-					print "<td style='width:5%;'>".caEditorLink($this->request, caNavIcon(__CA_NAV_ICON_EDIT__, 2), '', $vs_related_table, $vn_id, array(), array())."</td>";
-?>
+					<td style='width:5%;'><?= caEditorLink($this->request, caNavIcon(__CA_NAV_ICON_EDIT__, 2), '', $vs_related_table, $vn_id, array(), array()); ?></td>
+					<td style="width:10px">
+						<a href="#" class="caInterstitialEditButton listRelEditButton"><?= caNavIcon(__CA_NAV_ICON_INTERSTITIAL_EDIT_BUNDLE__, "16px"); ?></a>
+					</td>
 					<td style="padding-left: 5px; padding-right: 5px;">
-						<?php print $va_rel_id_typenames[$vn_relation_id]; ?>
+						<?= $va_rel_id_typenames[$vn_relation_id]; ?>
 					</td>
 <?php
 						
@@ -135,6 +134,9 @@
 						print "</span></td>";
                     }
 ?>	
+					<td style="width:10px">
+						<a href="#" class="caDeleteItemButton listRelDeleteButton"><?= caNavIcon(__CA_NAV_ICON_DEL_BUNDLE__, 1); ?></a>
+					</td>
 				</tr>
 <?php
 				$i++;
@@ -147,7 +149,7 @@
 ?>
 				<tfoot>
 					<tr>
-						<td colspan="2" class="listtableTotals"><?php print _t('Totals'); ?></td>
+						<td colspan="2" class="listtableTotals"><?= _t('Totals'); ?></td>
 <?php
 						foreach($va_bottom_line as $vn_placement_id => $vs_bottom_line_value) {
 							print "<td>{$vs_bottom_line_value}</td>";
@@ -166,20 +168,19 @@
 	if($vs_current_sort == '_user') {
 ?>
 		<script type="text/javascript">
-			jQuery('#<?php print $vs_interstitial_prefix; ?>RelatedList tbody').sortable({
+			jQuery('#<?= $vs_interstitial_prefix; ?>RelatedList tbody').sortable({
 				update: function() {
 					var ids = [];
-					jQuery('#<?php print $vs_interstitial_prefix; ?>RelatedList tbody tr').each(function() {
-						ids.push(jQuery(this).attr('id').replace('<?php print $vs_interstitial_prefix; ?>', ''));
+					jQuery('#<?= $vs_interstitial_prefix; ?>RelatedList tbody tr').each(function() {
+						ids.push(jQuery(this).attr('id').replace('<?= $vs_interstitial_prefix; ?>', ''));
 					});
 
-					jQuery.get(
-						'<?php print caNavUrl($this->request, $this->request->getModulePath(), $this->request->getController(), 'SaveUserSort'); ?>',
-						{ ids: ids, related_rel_table: "<?php print $vs_related_rel_table; ?>" }
+					jQuery.post(
+						'<?= caNavUrl($this->request, $this->request->getModulePath(), $this->request->getController(), 'SaveUserSort'); ?>',
+						{ ids: ids, related_rel_table: "<?= $vs_related_rel_table; ?>" }
 					);
 				}
 			}).disableSelection();
 		</script>
 <?php
-	}
-?>
+}

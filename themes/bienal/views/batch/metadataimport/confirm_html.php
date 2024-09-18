@@ -1,13 +1,13 @@
 <?php
 /* ----------------------------------------------------------------------
- * bundles/confirm_html.php : 
+ * views/batch/metadataimport/confirm_html.php : 
  * ----------------------------------------------------------------------
  * CollectiveAccess
  * Open-source collections management software
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2013 Whirl-i-Gig
+ * Copyright 2013-2020 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -25,10 +25,10 @@
  *
  * ----------------------------------------------------------------------
  */
- 
 	AssetLoadManager::register("panel");
 	
- 	$va_last_settings = $this->getVar('batch_metadataimport_last_settings');
+	$queue_enabled = (bool)$this->request->config->get('queue_enabled');
+ 	$last_settings = $this->getVar('batch_metadataimport_last_settings');
 ?>
 <script type="text/javascript">
 	var caConfirmBatchExecutionPanel;
@@ -58,7 +58,7 @@
 	}
 </script>
 <div id="caConfirmBatchExecutionPanel" class="caConfirmBatchExecutionPanel"> 
-	<div class='dialogHeader'><?php print _t('Import data'); ?></div>
+	<div class='dialogHeader'><?= _t('Import data'); ?></div>
 	<div id="caConfirmBatchExecutionPanelContentArea">
 
 			<div class="caConfirmBatchExecutionPanelAlertText" id="caConfirmBatchExecutionPanelAlertText">
@@ -70,15 +70,34 @@
 				<table class="caConfirmBatchExecutionPanelAlertControls">
 					<tr style="vertical-align: top;">
 <?php
+	if ($queue_enabled) {
+?>
+				<td class="caConfirmBatchExecutionPanelAlertControls">
+<?php
+					$opts = array('id' => 'caRunBatchInBackground', 'value' => 1);
+					if (isset($last_settings['runInBackground']) && $last_settings['runInBackground']) {
+						$opts['checked'] = 1;
+					}
+					print caHTMLCheckboxInput('run_in_background', $opts);
+?>
+				</td>
+				<td class="caConfirmBatchExecutionPanelAlertControls">
+<?php
+					print _t('Process in background');
+?>
+
+				</td>
+<?php
+	}
 	if ($vs_email = trim($this->request->user->get('email'))) {
 ?>
 				<td class="caConfirmBatchExecutionPanelAlertControl">
 <?php			
-					$va_opts = array('id' => 'caSendEmailWhenDone', 'value' => 1);
-					if (isset($va_last_settings['sendMail']) && $va_last_settings['sendMail']) {
-						$va_opts['checked'] = 1;
+					$opts = array('id' => 'caSendEmailWhenDone', 'value' => 1);
+					if (isset($last_settings['sendMail']) && $last_settings['sendMail']) {
+						$opts['checked'] = 1;
 					}
-					print caHTMLCheckboxInput('send_email_when_done', $va_opts);
+					print caHTMLCheckboxInput('send_email_when_done', $opts);
 ?>
 				</td>
 				<td class="caConfirmBatchExecutionPanelAlertControl">
@@ -93,11 +112,11 @@
 ?>
 				<td class="caConfirmBatchExecutionPanelAlertControl">
 <?php			
-					$va_opts = array('id' => 'caSendSMSWhenDone', 'value' => 1);
-					if (isset($va_last_settings['sendSMS']) && $va_last_settings['sendSMS']) {
-						$va_opts['checked'] = 1;
+					$opts = array('id' => 'caSendSMSWhenDone', 'value' => 1);
+					if (isset($last_settings['sendSMS']) && $last_settings['sendSMS']) {
+						$opts['checked'] = 1;
 					}
-					print caHTMLCheckboxInput('send_sms_when_done', $va_opts);
+					print caHTMLCheckboxInput('send_sms_when_done', $opts);
 ?>
 				</td>
 				<td class="caConfirmBatchExecutionPanelAlertControl">
@@ -115,8 +134,8 @@
 			<div id="caConfirmBatchExecutionPanelControlButtons">
 				<table>
 					<tr>
-						<td align="right"><?php print caJSButton($this->request, __CA_NAV_ICON_SAVE__, _t('Execute data import'), 'caConfirmBatchExecutionFormExecuteButton', array('onclick' => 'caExecuteBatch(); return false;'), array()); ?></td>
-						<td align="left"><?php print caJSButton($this->request, __CA_NAV_ICON_CANCEL__, _t('Cancel'), 'caConfirmBatchExecutionFormCancelButton', array('onclick' => 'caConfirmBatchExecutionPanel.hidePanel(); return false;'), array()); ?></td>
+						<td align="right"><?= caJSButton($this->request, __CA_NAV_ICON_SAVE__, _t('Execute data import'), 'caConfirmBatchExecutionFormExecuteButton', array('onclick' => 'caExecuteBatch(); return false;'), array()); ?></td>
+						<td align="left"><?= caJSButton($this->request, __CA_NAV_ICON_CANCEL__, _t('Cancel'), 'caConfirmBatchExecutionFormCancelButton', array('onclick' => 'caConfirmBatchExecutionPanel.hidePanel(); return false;'), array()); ?></td>
 					</tr>
 				</table>
 			</div>

@@ -25,8 +25,8 @@
  *
  * ----------------------------------------------------------------------
  */
-	$va_download_list = $this->getVar('download_list');
-	$va_tables = $this->getVar('tables');
+	if (!is_array($va_download_list = $this->getVar('download_list'))) { $va_download_list = []; }
+	if (!is_array($va_tables = $this->getVar('tables'))) { $va_tables = []; }
 	$va_labels_by_table_num = $this->getVar("labels_by_table_num");
 	$vs_group_by = $this->getVar("download_list_group_by");
 
@@ -40,11 +40,11 @@
 </script>
 <div class="sectionBox">
 	<?php 
-		print caFormTag($this->request, 'Index', 'downloadLogSearch');
+		print caFormTag($this->request, 'Index', 'downloadLogSearch', null, 'post', 'multipart/form-data', '_top', array('noCSRFToken' => true, 'disableUnsavedChangesWarning' => true));
 		print caFormControlBox(
 			'<div class="list-filter">'._t('Filter').': <input type="text" name="filter" value="" onkeyup="$(\'#caDownloadList\').caFilterTable(this.value); return false;" size="20"/></div>', 
 			'', 
-			_t('Group by').': '.caHTMLSelect('group_by', array(_t('Downloads') => "download", _t('Record') => "record"), null, array('value' => $vs_group_by)).'&nbsp;&nbsp;'._t('Show from').': '.caHTMLTextInput('search', array('size' => 25, 'value' => $this->getVar('download_list_search')))." ".caFormSubmitButton($this->request, __CA_NAV_ICON_SEARCH__, "", 'downloadLogSearch')
+			_t('Group by %1 from %2', caHTMLSelect('group_by', array(_t('Downloads') => "download", _t('Record') => "record"), null, array('value' => $vs_group_by)), caHTMLTextInput('search', array('size' => 12, 'value' => $this->getVar('download_list_search'), 'class' => 'dateBg'))).caFormSubmitButton($this->request, __CA_NAV_ICON_SEARCH__, "", 'downloadLogSearch')
 		);
 		print "</form>"; 
 	?>
@@ -56,16 +56,16 @@
 				<thead>
 					<tr>
 						<th class="list-header-unsorted">
-							<?php print _t('Item'); ?>
+							<?= _t('Item'); ?>
 						</th>
 						<th class="list-header-unsorted">
-							<?php print _t('Record Type'); ?>
+							<?= _t('Record Type'); ?>
 						</th>
 						<th class="list-header-unsorted">
-							<?php print _t('Num Downloads'); ?>
+							<?= _t('Num Downloads'); ?>
 						</th>
 						<th class="list-header-unsorted">
-							<?php print _t('Num Users'); ?>
+							<?= _t('Num Users'); ?>
 						</th>
 					</tr>
 				</thead>
@@ -76,24 +76,17 @@
 		?>
 					<tr>
 						<td>
-							<?php print caEditorLink($this->request, $va_labels_by_table_num[$va_download['info']['table_num']][$va_download['info']['row_id']], '', $va_tables[$va_download['info']['table_num']]['name'], $va_download['info']['row_id'], array()); ?>
+							<?= caEditorLink($this->request, $va_labels_by_table_num[$va_download['info']['table_num']][$va_download['info']['row_id']], '', $va_tables[$va_download['info']['table_num']]['name'], $va_download['info']['row_id'], array()); ?>
 						</td>
 						<td>
-							<?php print $va_tables[$va_download['info']['table_num']]['displayname']; ?>
+							<?= $va_tables[$va_download['info']['table_num']]['displayname']; ?>
 						</td>
 						<td>
-							<?php print $va_download['num_downloads']; ?>
+							<?= $va_download['num_downloads']; ?>
 						</td>
 						<td>
-							<?php if (!is_null($va_download['num_logged_in_users']))
-							{ 
-							?>
-							<?php print (sizeof($va_download['num_logged_in_users'])) ? sizeof($va_download['num_logged_in_users'])." (logged in)" : ""; ?>
-							<?php 
-							}
-							?>
-							
-							<?php print ($va_download['num_anon_users']) ? $va_download['num_anon_users']." (anonymous)" : ""; ?>
+							<?= (sizeof($va_download['num_logged_in_users'])) ? sizeof($va_download['num_logged_in_users'])." (logged in)" : ""; ?>
+							<?= ($va_download['num_anon_users']) ? $va_download['num_anon_users']." (anonymous)" : ""; ?>
 						</td>
 					</tr>
 		<?php
@@ -103,7 +96,7 @@
 				<tr>
 					<td colspan='9'>
 						<div align="center">
-							<?php print (trim($this->getVar('search_list_search'))) ? _t('No searches found') : _t('Enter a date to display searches from above'); ?>
+							<?= (trim($this->getVar('search_list_search'))) ? _t('No downloads found') : _t('Enter a date to display downloads from above'); ?>
 						</div>
 					</td>
 				</tr>
@@ -120,74 +113,54 @@
 				<thead>
 					<tr>
 						<th class="list-header-unsorted">
-							<?php print _t('Date/time'); ?>
+							<?= _t('Date/time'); ?>
 						</th>
 						<th class="list-header-unsorted">
-							<?php print _t('Record Type'); ?>
+							<?= _t('Type'); ?>
 						</th>
 						<th class="list-header-unsorted">
-							<?php print _t('Item'); ?>
+							<?= _t('Item'); ?>
 						</th>
 						<th class="list-header-unsorted">
-							<?php print _t('User'); ?>
+							<?= _t('User'); ?>
 						</th>
 						<th class="list-header-unsorted">
-							<?php print _t('Userclass'); ?>
+							<?= _t('Userclass'); ?>
 						</th>
 						<th class="list-header-unsorted">
-							<?php print _t('IP'); ?>
+							<?= _t('IP'); ?>
 						</th>
 						<th class="list-header-unsorted">
-							<?php print _t('Source'); ?>
+							<?= _t('Source'); ?>
 						</th>
 					</tr>
 				</thead>
 				<tbody>
 		<?php
-			if (!is_null($va_download_list))
-			{
 			if (sizeof($va_download_list)) {
 				foreach($va_download_list as $va_download) {
 		?>
 					<tr>
 						<td>
-							<?php print date("n/d/Y @g:i:sa T", $va_download['log_datetime']); ?>
+							<?= caGetLocalizedDate($va_download['log_datetime']); ?>
 						</td>
 						<td>
-							<?php print $va_tables[$va_download['table_num']]['displayname']; ?>
+							<?= $va_tables[$va_download['table_num']]['displayname']; ?>
 						</td>
 						<td>
-							<?php
-								$vs_resource_location_id = "";
-
-								if ($va_download['table_num'] == 57)
-								{
-									$item = new ca_objects($va_download['row_id']);
-
-									$va_info_resources = explode("|", $item->getWithTemplate('<unit relativeTo="ca_objects.info_resource_rs" delimiter="|">^ca_objects.info_resource_rs.info_resource_rs_location_id:^ca_objects.info_resource_rs.info_resource_rs_resourceid</unit>'));
-
-									
-									foreach ($va_info_resources as $va_info_resource)
-									{
-										if (explode(":", $va_info_resource)[1] == $va_download['representation_id'])
-											$vs_resource_location_id = " [" . explode(":", $va_info_resource)[0] . "]";
-									}
-								}
-
-								print caEditorLink($this->request, $va_labels_by_table_num[$va_download['table_num']][$va_download['row_id']], '', $va_tables[$va_download['table_num']]['name'], $va_download['row_id'], array()) . $vs_resource_location_id; 
-							?>
+							<?= caEditorLink($this->request, $va_labels_by_table_num[$va_download['table_num']][$va_download['row_id']], '', $va_tables[$va_download['table_num']]['name'], $va_download['row_id'], array()); ?>
 						</td>
 						<td>
-							<?php print $va_download['user_id'] ? $va_download['user_name'] : "anonymous"; ?>
+							<?= $va_download['user_id'] ? $va_download['user_name'] : "anonymous"; ?>
 						</td>
 						<td>
-							<?php print $va_download['userclass']; ?>
+							<?= $va_download['userclass']; ?>
 						</td>
 						<td>
-							<?php print $va_download['ip_addr']; ?>
+							<?= $va_download['ip_addr']; ?>
 						</td>
 						<td>
-							<?php print $va_download['download_source']; ?>
+							<?= $va_download['download_source']; ?>
 						</td>
 					</tr>
 		<?php
@@ -197,12 +170,11 @@
 				<tr>
 					<td colspan='9'>
 						<div align="center">
-							<?php print (trim($this->getVar('search_list_search'))) ? _t('No searches found') : _t('Enter a date to display searches from above'); ?>
+							<?= (trim($this->getVar('search_list_search'))) ? _t('No downloads found') : _t('Enter a date to display downloads from above'); ?>
 						</div>
 					</td>
 				</tr>
 		<?php
-			}
 			}
 		?>
 				</tbody>

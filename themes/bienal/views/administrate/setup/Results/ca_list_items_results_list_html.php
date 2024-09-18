@@ -74,14 +74,14 @@ if (!$this->getVar('no_hierarchies_defined')) {
 			
 			($i == 2) ? $i = 0 : "";
 ?>
-			<tr <?php print ($i ==1) ? "class='odd'" : ""; ?>>
+			<tr <?= ($i ==1) ? "class='odd'" : ""; ?>>
 				<td class="addItemToSetControl">
-					<input type='checkbox' name='add_to_set_ids' value='<?php print (int)$vn_item_id; ?>' class="addItemToSetControl" />
-					<div><?php print $vn_start + $vn_item_count + 1; ?></div>
+					<input type='checkbox' name='add_to_set_ids' value='<?= (int)$vn_item_id; ?>' class="addItemToSetControl" />
+					<div><?= $vn_start + $vn_item_count + 1; ?></div>
 				</td>
 <?php
 				foreach($va_display_list as $vn_placement_id => $va_display_item) {
-					print "<td>".$t_display->getDisplayValue($vo_result, $vn_placement_id)."</td>";
+					print "<td>".$t_display->getDisplayValue($vo_result, ($vn_placement_id > 0) ? $vn_placement_id : $va_display_item['bundle_name'])."</td>";
 				}
 				print "<td class='listtableEditDelete'>".caEditorLink($this->request, caNavIcon(__CA_NAV_ICON_EDIT__, 2), 'list-button', 'ca_list_items', $vn_item_id, array());
 				print " <a href='#' onclick='caOpenBrowserWith({$vn_item_id}); return false;'>".caNavIcon(__CA_NAV_ICON_GO__, 2, array('title' => _t('View in hierarchy')))."</a>";
@@ -99,7 +99,7 @@ if (!$this->getVar('no_hierarchies_defined')) {
 ?>
 			<tfoot>
 				<tr>
-					<td colspan="2" class="listtableTotals"><?php print _t('Totals'); ?></td>
+					<td colspan="2" class="listtableTotals"><?= _t('Totals'); ?></td>
 <?php
 					foreach($va_bottom_line as $vn_placement_id => $vs_bottom_line_value) {
 						print "<td>{$vs_bottom_line_value}</td>";

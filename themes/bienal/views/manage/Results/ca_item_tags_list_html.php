@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2009 Whirl-i-Gig
+ * Copyright 2009-2018 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -33,19 +33,19 @@
 		<form id="tagListForm"><input type="hidden" name="mode" value="search">
 		
 		<div style="text-align:right;">
-			<?php print _t('Batch actions'); ?>: </a>
-			<a href='#' onclick='jQuery("#tagListForm").attr("action", "<?php print caNavUrl($this->request, 'manage', 'Tags', 'DeleteTags'); ?>").submit();' class='form-button'><span class='form-button approveDelete'><?php print caNavIcon(__CA_NAV_ICON_DELETE__, 1); ?><span class='formtext'><?php print _t("Delete"); ?></span></span></a>
+			<?= _t('Batch actions'); ?>: </a>
+			<a href='#' onclick='jQuery("#tagListForm").attr("action", "<?= caNavUrl($this->request, 'manage', 'Tags', 'DeleteTags'); ?>").submit();' class='form-button'><span class='form-button approveDelete'><?= caNavIcon(__CA_NAV_ICON_DELETE__, 1); ?><span class='formtext'><?= _t("Delete"); ?></span></span></a>
 		</div>
 		<table id="caTagsList" class="listtable" border="0" cellpadding="0" cellspacing="1" style="margin-top:10px;">
 			<thead>
 				<tr>
 					<th class="list-header-unsorted">
-						<?php print _t('Tag'); ?>
+						<?= _t('Tag'); ?>
 					</th>
 					<th class="list-header-unsorted">
-						<?php print _t('Number of tagged items'); ?>
+						<?= _t('Number of tagged items'); ?>
 					</th>
-					<th class="{sorter: false} list-header-nosort"><?php print _t('Select'); ?></th>
+					<th class="{sorter: false} list-header-nosort"><?= _t('Select'); ?></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -53,32 +53,20 @@
 <?php
 		$i = 0;
 		$vn_item_count = 0;
-		//$o_tep = new TimeExpressionParser();
-		//$o_datamodel = Datamodel::load();
 		
 		while(($vn_item_count < $vn_items_per_page) && $vo_result->nextHit()) {
 ?>
 				<tr>
 					<td>
-						<?php print $vo_result->get('ca_item_tags.tag'); ?>
+						<?= caNavLink($this->request, $tag = $vo_result->get('ca_item_tags.tag'), '', 'find', 'QuickSearch', 'Index', ['search' => "ca_item_tags.tag:\"{$tag}\""]); ?>
 					</td>
 					<td>
 <?php
-		$o_db = new Db();
-		$qr_c = $o_db->query("
-			SELECT count(*) c
-			FROM ca_items_x_tags
-			WHERE tag_id = ?
-		", $vo_result->get('ca_item_tags.tag_id'));
-		
-		if ($qr_c->nextRow()) {
-			print (int)$qr_c->get('c');
-		}
-						
+						print ca_items_x_tags::find(['tag_id' => $vo_result->get('ca_item_tags.tag_id')], ['returnAs' => 'count']);
 ?>
 					</td>
 					<td>
-						<input type="checkbox" name="tag_id[]" value="<?php print $vo_result->get('ca_item_tags.tag_id'); ?>">
+						<input type="checkbox" name="tag_id[]" value="<?= $vo_result->get('ca_item_tags.tag_id'); ?>">
 					</td>
 				</tr>
 <?php

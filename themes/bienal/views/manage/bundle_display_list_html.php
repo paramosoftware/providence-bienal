@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2010-2016 Whirl-i-Gig
+ * Copyright 2010-2021 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -43,7 +43,7 @@
 	});
 	
 	function _navigateToNewForm(table_num) {
-		document.location = '<?php print caNavUrl($this->request, 'manage/bundle_displays', 'BundleDisplayEditor', 'Edit', array('display_id' => 0)); ?>' + '/table_num/' + table_num;
+		document.location = '<?= caNavUrl($this->request, 'manage/bundle_displays', 'BundleDisplayEditor', 'Edit', array('display_id' => 0)); ?>' + '/table_num/' + table_num;
 	}
 /* ]]> */
 </script>
@@ -60,13 +60,16 @@
 		<thead>
 			<tr>
 				<th class="list-header-unsorted">
-					<?php print _t('Display name'); ?>
+					<?= _t('Display name'); ?>
 				</th>
 				<th class="list-header-unsorted">
-					<?php print _t('Owner'); ?>
+					<?= _t('Code'); ?>
 				</th>
 				<th class="list-header-unsorted">
-					<?php print _t('Content type'); ?>
+					<?= _t('Owner'); ?>
+				</th>
+				<th class="list-header-unsorted">
+					<?= _t('Content type'); ?>
 				</th>
 				<th class="{sorter: false} list-header-nosort">&nbsp;</th>
 			</tr>
@@ -78,25 +81,28 @@
 ?>
 			<tr>
 				<td>
-					<?php print $va_display['name']; ?>
+					<?= $va_display['name']; ?>
 				</td>
 				<td>
-					<?php print $va_display['fname'].' '.$va_display['lname']; ?>
+					<?= $va_display['display_code']; ?>
 				</td>
 				<td>
-					<?php print $va_display['bundle_display_content_type']; ?>
+					<?= $va_display['fname'].' '.$va_display['lname']; ?>
+				</td>
+				<td>
+					<?= $va_display['bundle_display_content_type']; ?>
 				</td>
 				<td class="listtableEditDelete">
 <?php
 	if ($this->request->user->canDoAction('can_edit_ca_bundle_displays')) {
 ?>
-					<?php print caNavButton($this->request, __CA_NAV_ICON_EDIT__, _t("Edit"), '', 'manage/bundle_displays', 'BundleDisplayEditor', 'Edit', array('display_id' => $va_display['display_id']), array(), array('icon_position' => __CA_NAV_ICON_ICON_POS_LEFT__, 'use_class' => 'list-button', 'no_background' => true, 'dont_show_content' => true)); ?>
+					<?= caNavButton($this->request, __CA_NAV_ICON_EDIT__, _t("Edit"), '', 'manage/bundle_displays', 'BundleDisplayEditor', 'Edit', array('display_id' => $va_display['display_id']), array(), array('icon_position' => __CA_NAV_ICON_ICON_POS_LEFT__, 'use_class' => 'list-button', 'no_background' => true, 'dont_show_content' => true)); ?>
 <?php
 	}
 	
 	if ($this->request->user->canDoAction('can_delete_ca_bundle_displays')) {
 ?>					
-					<?php print caNavButton($this->request, __CA_NAV_ICON_DELETE__, _t("Delete"), '', 'manage/bundle_displays', 'BundleDisplayEditor', 'Delete', array('display_id' => $va_display['display_id']), array(), array('icon_position' => __CA_NAV_ICON_ICON_POS_LEFT__, 'use_class' => 'list-button', 'no_background' => true, 'dont_show_content' => true)); ?>
+					<?= caNavButton($this->request, __CA_NAV_ICON_DELETE__, _t("Delete"), '', 'manage/bundle_displays', 'BundleDisplayEditor', 'Delete', array('display_id' => $va_display['display_id']), array(), array('icon_position' => __CA_NAV_ICON_ICON_POS_LEFT__, 'use_class' => 'list-button', 'no_background' => true, 'dont_show_content' => true)); ?>
 <?php
 	}
 ?>
@@ -107,9 +113,9 @@
 	} else {
 ?>
 		<tr>
-			<td colspan='4'>
+			<td colspan='5'>
 				<div align="center">
-					<?php print _t('No displays lists have been configured'); ?>
+					<?= _t('No displays lists have been configured'); ?>
 				</div>
 			</td>
 		</tr>

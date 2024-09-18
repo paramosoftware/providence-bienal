@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2008-2016 Whirl-i-Gig
+ * Copyright 2008-2023 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -37,6 +37,8 @@
 	$vs_rel_table		= $this->getVar('rel_table');
 	$vn_rel_type_id		= $this->getVar('rel_type_id');
 	$vn_rel_id			= $this->getVar('rel_id');
+	
+	$forced_values 		= $this->getVar('forced_values') ?? [];
 
 	if ($vb_can_edit) {
 		$va_cancel_parameters = ($vn_place_id ? array('place_id' => $vn_place_id) : array('type_id' => $t_place->getTypeID()));
@@ -44,7 +46,7 @@
 			caFormSubmitButton($this->request, __CA_NAV_ICON_SAVE__, _t("Save"), 'PlaceEditorForm').' '.
 			($this->getVar('show_save_and_return') ? caFormSubmitButton($this->request, __CA_NAV_ICON_SAVE__, _t("Save and return"), 'PlaceEditorForm', array('isSaveAndReturn' => true)) : '').' '.
 			caFormNavButton($this->request, __CA_NAV_ICON_CANCEL__, _t("Cancel"), '', 'editor/places', 'PlaceEditor', 'Edit/'.$this->request->getActionExtra(), $va_cancel_parameters),
-			'', 
+			($this->getVar('show_show_notifications') ? caFormJSButton($this->request, __CA_NAV_ICON_ALERT__, _t("Show editor alerts"), '', ['class' => 'caEditorFormNotifications']) : ''), 
 			((intval($vn_place_id) > 0) && $vb_can_delete) ? caFormNavButton($this->request, __CA_NAV_ICON_DELETE__, _t("Delete"), '', 'editor/places', 'PlaceEditor', 'Delete/'.$this->request->getActionExtra(), array('place_id' => $vn_place_id)) : ''
 		);
 	}	
@@ -56,21 +58,22 @@
 			$va_form_elements = $t_place->getBundleFormHTMLForScreen($this->request->getActionExtra(), array(
 									'request' => $this->request, 
 									'formName' => 'PlaceEditorForm',
-									'context_id' => $vs_context_id
+									'context_id' => $vs_context_id,
+									'forcedValues' => $forced_values
 								), $va_bundle_list);
 									
 			print join("\n", $va_form_elements);
 			
 			if ($vb_can_edit) { print $vs_control_box; }
 ?>
-			<input type='hidden' name='_context_id' value='<?php print $this->getVar('_context_id'); ?>'/>
-			<input type='hidden' name='place_id' value='<?php print $vn_place_id; ?>'/>
-			<input type='hidden' name='above_id' value='<?php print $vn_above_id; ?>'/>
+			<input type='hidden' name='_context_id' value='<?= $this->getVar('_context_id'); ?>'/>
+			<input type='hidden' name='place_id' value='<?= $vn_place_id; ?>'/>
+			<input type='hidden' name='above_id' value='<?= $vn_above_id; ?>'/>
 			<input id='isSaveAndReturn' type='hidden' name='is_save_and_return' value='0'/>
-			<input type='hidden' name='rel_table' value='<?php print $vs_rel_table; ?>'/>
-			<input type='hidden' name='rel_type_id' value='<?php print $vn_rel_type_id; ?>'/>
-			<input type='hidden' name='rel_id' value='<?php print $vn_rel_id; ?>'/>
-			<input type='hidden' name='after_id' value='<?php print $vn_after_id; ?>'/>
+			<input type='hidden' name='rel_table' value='<?= $vs_rel_table; ?>'/>
+			<input type='hidden' name='rel_type_id' value='<?= $vn_rel_type_id; ?>'/>
+			<input type='hidden' name='rel_id' value='<?= $vn_rel_id; ?>'/>
+			<input type='hidden' name='after_id' value='<?= $vn_after_id; ?>'/>
 <?php
 			if($this->request->getParameter('rel', pInteger)) {
 ?>
@@ -83,4 +86,4 @@
 
 	<div class="editorBottomPadding"><!-- empty --></div>
 	
-	<?php print caSetupEditorScreenOverlays($this->request, $t_place, $va_bundle_list); ?>
+	<?= caSetupEditorScreenOverlays($this->request, $t_place, $va_bundle_list); ?>

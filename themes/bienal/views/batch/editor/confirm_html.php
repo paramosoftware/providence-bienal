@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2012 Whirl-i-Gig
+ * Copyright 2012-2021 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -29,9 +29,9 @@
 	AssetLoadManager::register("panel");
 	
 	$t_subject 			= $this->getVar('t_subject');
-	$t_set	 			= $this->getVar('t_set');
+	$rs	 				= $this->getVar('record_selection');
 	
-	$vn_num_items_in_set = $t_set->getItemCount(array('user_id' => $this->request->getUserID()));
+	$vn_num_items_in_set = $rs->getItemCount(array('user_id' => $this->request->getUserID()));
 	$vb_queue_enabled = (bool)$this->request->config->get('queue_enabled');
  	$va_last_settings = $this->getVar('batch_editor_last_settings');
 ?>
@@ -63,7 +63,7 @@
 	}
 </script>
 <div id="caConfirmBatchExecutionPanel" class="caConfirmBatchExecutionPanel"> 
-	<div class='dialogHeader'><?php print _t('Batch edit (%1 %2)', $vn_num_items_in_set, $t_subject->getProperty(($vn_num_items_in_set == 1) ? 'NAME_SINGULAR' : 'NAME_PLURAL')); ?></div>
+	<div class='dialogHeader'><?= _t('Batch edit (%1 %2)', $vn_num_items_in_set, $t_subject->getProperty(($vn_num_items_in_set == 1) ? 'NAME_SINGULAR' : 'NAME_PLURAL')); ?></div>
 	<div id="caConfirmBatchExecutionPanelContentArea">
 
 			<div class="caConfirmBatchExecutionPanelAlertText">
@@ -139,8 +139,8 @@
 			<div id="caConfirmBatchExecutionPanelControlButtons">
 				<table>
 					<tr>
-						<td align="right"><?php print caJSButton($this->request, __CA_NAV_ICON_SAVE__, _t('Execute batch edit'), 'caConfirmBatchExecutionFormExecuteButton', array('onclick' => 'caExecuteBatch(); return false;'), array()); ?></td>
-						<td align="left"><?php print caJSButton($this->request, __CA_NAV_ICON_CANCEL__, _t('Cancel'), 'caConfirmBatchExecutionFormCancelButton', array('onclick' => 'caConfirmBatchExecutionPanel.hidePanel(); return false;'), array()); ?></td>
+						<td align="right"><?= caJSButton($this->request, __CA_NAV_ICON_SAVE__, _t('Execute batch edit'), 'caConfirmBatchExecutionFormExecuteButton', array('onclick' => 'caExecuteBatch(); return false;'), array()); ?></td>
+						<td align="left"><?= caJSButton($this->request, __CA_NAV_ICON_CANCEL__, _t('Cancel'), 'caConfirmBatchExecutionFormCancelButton', array('onclick' => 'caConfirmBatchExecutionPanel.hidePanel(); return false;'), array()); ?></td>
 					</tr>
 				</table>
 			</div>

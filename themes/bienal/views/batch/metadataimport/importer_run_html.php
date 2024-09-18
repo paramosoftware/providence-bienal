@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2013-2016 Whirl-i-Gig
+ * Copyright 2013-2022 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -38,10 +38,10 @@ print $vs_control_box = caFormControlBox(
 ?>
 <div class="sectionBox">
 <?php
-		print caFormTag($this->request, 'ImportData/'.$this->request->getActionExtra(), 'caBatchMetadataImportForm', null, 'POST', 'multipart/form-data', '_top', array('disableUnsavedChangesWarning' => true, 'noTimestamp' => true));
+		print caFormTag($this->request, 'ImportData/'.$this->request->getActionExtra(), 'caBatchMetadataImportForm', null, 'POST', 'multipart/form-data', '_top', array('noCSRFToken' => false, 'disableUnsavedChangesWarning' => true, 'noTimestamp' => true));
 ?>
 		<div class='bundleLabel'>
-			<span class="formLabelText"><?php print _t('Importer'); ?></span> 
+			<span class="formLabelText"><?= _t('Importer'); ?></span> 
 			<div class="bundleContainer">
 				<div class="caLabelList" >
 					<p>
@@ -53,7 +53,7 @@ print $vs_control_box = caFormControlBox(
 			</div>
 		</div>
 		<div class='bundleLabel'>
-			<span class="formLabelText"><?php print _t('Data format'); ?></span> 
+			<span class="formLabelText"><?= _t('Data format'); ?></span> 
 			<div class="bundleContainer">
 				<div class="caLabelList" >
 					<p>
@@ -67,7 +67,7 @@ print $vs_control_box = caFormControlBox(
 			</div>
 		</div>
 		<div class='bundleLabel' id="caSourceFileContainer">
-			<span class="formLabelText"><?php print _t('Data file'); ?></span> 
+			<span class="formLabelText"><?= _t('Data file'); ?></span> 
 			<div class="bundleContainer">
 				<div class="caLabelList" >
 					<div style='padding:10px 0px 10px 10px;'>
@@ -91,13 +91,22 @@ print $vs_control_box = caFormControlBox(
 ?>
 								</td>
 							</tr>
+							<tr class="caFileSourceControls" id='caFileGoogleDriveContainer'>
+								<td class="caSourceFileControlRadio">
+<?php		
+		$va_attr = array('value' => 'googledrive',  'onclick' => 'caSetBatchMetadataImportFormState();', 'id' => 'caFileGoogleDriveRadio');
+		if (caGetOption('fileInput', $va_last_settings, 'file') === 'googledrive') { $va_attr['checked'] = 'checked'; }	
+		print caHTMLRadioButtonInput("fileInput", $va_attr)."</td><td class='formLabel caFileSourceControls'>"._t('From GoogleDrive')." <span id='caFileGoogleDriveInputContainer'>".caHTMLTextInput('google_drive_url', ['value' => caGetOption('googleDriveUrl', $va_last_settings, ''), 'class' => 'urlBg', 'id' => 'caFileGoogleDriveInput'], ['width' => '500px'])."</span>";
+?>
+								</td>
+							</tr>
 						</table>
 					</div>
 				</div>
 			</div>
 		</div>
 		<div class='bundleLabel' id="caSourceUrlContainer">
-			<span class="formLabelText"><?php print _t('Data URL'); ?></span> 
+			<span class="formLabelText"><?= _t('Data URL'); ?></span> 
 			<div class="bundleContainer">
 				<div class="caLabelList" >
 					<p>
@@ -109,7 +118,7 @@ print $vs_control_box = caFormControlBox(
 			</div>
 		</div>
 		<div class='bundleLabel' id="caSourceTextContainer">
-			<span class="formLabelText"><?php print _t('Data as text'); ?></span> 
+			<span class="formLabelText"><?= _t('Data as text'); ?></span> 
 			<div class="bundleContainer">
 				<div class="caLabelList" >
 					<p>
@@ -121,25 +130,49 @@ print $vs_control_box = caFormControlBox(
 			</div>
 		</div>
 		<div class='bundleLabel'>
-			<span class="formLabelText"><?php print _t('Log level'); ?></span> 
+			<span class="formLabelText"><?= _t('Log level'); ?></span> 
 			<div class="bundleContainer">
 				<div class="caLabelList">
 					<p>
 <?php
-		print caHTMLSelect('logLevel', caGetLogLevels(), array('id' => 'caLogLevel'), array('value' => $va_last_settings['logLevel']));
+		print caHTMLSelect('logLevel', caGetLogLevels(), array('id' => 'caLogLevel'), array('value' => $va_last_settings['logLevel'] ?? null));
 ?>
 					</p>
 				</div>
 			</div>
 		</div>
 		<div class='bundleLabel'>
-			<span class="formLabelText"><?php print _t('Testing options'); ?></span> 
+			<span class="formLabelText"><?= _t('Limit log to'); ?></span> 
+			<div class="bundleContainer">
+				<div class="caLabelList">
+					<table style="width: 600px; margin-left: 10px;">
+<?php
+		$c = 0;
+		$acc = [];
+		$limit_log_to_selected = caGetOption('limitLogTo', $va_last_settings, [], ['castTo' => 'array']);
+		foreach(['GENERAL' => _t('General information'), 'EXISTING_RECORD_POLICY' => _t('Existing record policy messages'), 'SKIP' => _t('Skip message'), 'RELATIONSHIPS' => _t('Relationship creation messages')] as $level => $name) {
+			$attr = ['value' => $level];
+			if(in_array($level, $limit_log_to_selected)) { $attr['checked'] = true; }
+			$acc[] = "<td class='formLabelPlain' style='padding: 5px'>".caHTMLCheckboxInput('limitLogTo[]', $attr, [])." {$name}</td>";
+			$c++;
+			if (($c % 2) == 0) {
+				print "<tr>".join("", $acc)."</tr>\n";
+				$acc = [];
+			}
+		}
+?>
+					</table>
+				</div>
+			</div>
+		</div>
+		<div class='bundleLabel'>
+			<span class="formLabelText"><?= _t('Testing options'); ?></span> 
 			<div class="bundleContainer">
 				<div class="caLabelList" >
 					<p class="formLabelPlain">
 <?php	
 		$va_attr = array('id' => 'caDryRun', 'value' => 1);
-		if ($va_last_settings['dryRun'] == 1) { $va_attr['checked'] = 1; }
+		if (($va_last_settings['dryRun'] ?? null) == 1) { $va_attr['checked'] = 1; }
 		print caHTMLCheckboxInput('dryRun', $va_attr)." "._t('Dry run');
 ?>
 					</p>
@@ -152,14 +185,12 @@ print $vs_control_box = caFormControlBox(
 ?>
 		</form>
 </div>
-<?php
-	print $vs_control_box; 
-?>
+<?= $vs_control_box; ?>
 <div class="editorBottomPadding"><!-- empty --></div>
 
 <script type="text/javascript">
 	function caShowConfirmBatchExecutionPanel() {
-		var msg = '<?php print addslashes(_t("You are about to import data using the <em>%1</em> importer")); ?>';
+		var msg = '<?= addslashes(_t("You are about to import data using the <em>%1</em> importer")); ?>';
 		msg = msg.replace("%1", jQuery("#caImporterList option:selected").text())
 		
 		caConfirmBatchExecutionPanel.showPanel();
@@ -170,8 +201,8 @@ print $vs_control_box = caFormControlBox(
 		e.preventDefault();
 	});
 	
-	var caDataReaderInfo = <?php print json_encode(ca_data_importers::getInfoForAvailableInputFormats()); ?>;
-	var caImporterInfo = <?php print json_encode(ca_data_importers::getImporters(null, ['dontIncludeWorksheet' => true])); ?>;
+	var caDataReaderInfo = <?= json_encode(ca_data_importers::getInfoForAvailableInputFormats()); ?>;
+	var caImporterInfo = <?= json_encode(ca_data_importers::getImporters(null, ['dontIncludeWorksheet' => true])); ?>;
 	
 	function caSetBatchMetadataImportFormState(dontAnimate) {
 		var info;
@@ -242,13 +273,28 @@ print $vs_control_box = caFormControlBox(
 				jQuery('#caImportAllDatasetsContainer').hide(dontAnimate ? 0 : 150);
 			}
 		}
+		
+		if(currentFormat.toLowerCase() !== 'xlsx') {
+			jQuery("#caFileGoogleDriveContainer").hide();
+			if(jQuery("#caFileGoogleDriveRadio").is(":checked")) {
+				jQuery("#caFileInputRadio").attr('checked', true);
+			}
+		}  else {
+			jQuery("#caFileGoogleDriveContainer").show();
+		}
 			
 		if (jQuery("#caFileInputRadio").is(":checked")) {
-			jQuery("#caFileInputContainer").show(dontAnimate ? 0 : 150);
+			jQuery("#caFileInputContainer").show(dontAnimate ? 0 : 150).attr('disabled', false);
 			jQuery("#caFileBrowserContainer").hide(dontAnimate ? 0 : 150);
+			jQuery("#caFileGoogleDriveInput").attr('disabled', true);
+		} else if(jQuery("#caFileGoogleDriveRadio").is(":checked")) {
+			jQuery("#caFileInputContainer").show(dontAnimate ? 0 : 150).attr('disabled', true);
+			jQuery("#caFileBrowserContainer").hide(dontAnimate ? 0 : 150);
+			jQuery("#caFileGoogleDriveInput").attr('disabled', false);
 		} else {
-			jQuery("#caFileInputContainer").hide(dontAnimate ? 0 : 150);
+			jQuery("#caFileInputContainer").attr('disabled', true);
 			jQuery("#caFileBrowserContainer").show(dontAnimate ? 0 : 150);
+			jQuery("#caFileGoogleDriveInput").attr('disabled', true);
 		}
 	}
 	

@@ -50,7 +50,6 @@
 	print $t_user->preferenceHtmlFormElement('cataloguing_locale', null, array());
 	print $t_user->preferenceHtmlFormElement('cataloguing_delete_reference_handling_default', null, array());
 	
-	$o_dm = Datamodel::load();
 	print "<div class='preferenceSectionDivider'><!-- empty --></div>\n"; 
 	
 	foreach(array(
@@ -73,7 +72,7 @@
 		print "<div class='preferenceSectionDivider'><!-- empty --></div>\n"; 
 	}
 ?>
-		<input type="hidden" name="action" value="<?php print $this->request->getAction(); ?>"/>
+		<input type="hidden" name="action" value="<?= $this->request->getAction(); ?>"/>
 	</form>
 <?php
 	print $vs_control_box;
