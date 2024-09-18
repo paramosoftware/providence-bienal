@@ -188,6 +188,24 @@ class BaseAdvancedSearchController extends BaseRefineableSearchController {
 			$vo_result->setOption('prefetch', $vn_items_per_page);
 
 			$this->opo_result_context->setParameter('form_data', $va_form_data);
+
+			// #4 Passando para getAdvancedSearchForm todos os tipos de relacionamento selecionados
+			/// FRED 26/2/2021
+			
+			if ($_REQUEST['ca_object_labels_rel_type'])
+				$this->opo_result_context->setParameter('ca_object_labels_rel_type', $_REQUEST['ca_object_labels_rel_type']);
+				
+			if ($_REQUEST['ca_entity_labels_rel_type'])
+				$this->opo_result_context->setParameter('ca_entity_labels_rel_type', $_REQUEST['ca_entity_labels_rel_type']);
+				
+			if ($_REQUEST['ca_occurrence_labels_rel_type'])
+				$this->opo_result_context->setParameter('ca_occurrence_labels_rel_type', $_REQUEST['ca_occurrence_labels_rel_type']);
+				
+			if ($_REQUEST['ca_place_labels_rel_type'])
+				$this->opo_result_context->setParameter('ca_place_labels_rel_type', $_REQUEST['ca_place_labels_rel_type']);
+			
+			// FIM #4
+
 			$this->opo_result_context->setSearchExpression($vs_search);
 
 			if($vb_is_new_search || $vb_criteria_have_changed || $vb_sort_has_changed || $this->type_restriction_has_changed) {
@@ -314,6 +332,23 @@ class BaseAdvancedSearchController extends BaseRefineableSearchController {
 		if ($this->request->getParameter('reset', pString) == 'clear') {
 			$va_form_data = array();
 		}
+
+		// #5 Passando para a View os tipos de relacionamento selecionados
+		/// FRED 5/2/2021
+		
+		if ($this->opo_result_context->getParameter('ca_object_labels_rel_type'))
+			$va_form_data = array_merge($va_form_data, array('ca_object_labels_rel_type' => $this->opo_result_context->getParameter('ca_object_labels_rel_type')));
+			
+		if ($this->opo_result_context->getParameter('ca_entity_labels_rel_type'))
+			$va_form_data = array_merge($va_form_data, array('ca_entity_labels_rel_type' => $this->opo_result_context->getParameter('ca_entity_labels_rel_type')));
+			
+		if ($this->opo_result_context->getParameter('ca_occurrence_labels_rel_type'))
+			$va_form_data = array_merge($va_form_data, array('ca_occurrence_labels_rel_type' => $this->opo_result_context->getParameter('ca_occurrence_labels_rel_type')));
+			
+		if ($this->opo_result_context->getParameter('ca_place_labels_rel_type'))
+			$va_form_data = array_merge($va_form_data, array('ca_place_labels_rel_type' => $this->opo_result_context->getParameter('ca_place_labels_rel_type')));
+		
+		// FIM #5
 
 		$this->view->setVar('form_data', $va_form_data);
 		$this->view->setVar('form_elements', $t_form->getHTMLFormElements($this->request, $va_form_data));

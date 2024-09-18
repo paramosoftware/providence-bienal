@@ -1346,7 +1346,16 @@ class ca_search_forms extends BundlableLabelableBaseModelWithAttributes {
 					'multivalueFormat' => '<i>^LABEL</i><br/>^ELEMENT',
 					'id' => str_replace('.', '_', $vs_field),
 					'policy' => $policy,
-				    'name' => $bundle
+				    'name' => $bundle,
+
+					// #2 Adicionando novos parâmetros (número da tabela base desse form e valores escolhidos dos tipos de relacionamento)
+					// FRED 26/2/2021
+					'table_num' => $this->get('table_num'),
+					'selected_relationship_types' => array('ca_entity_labels_rel_type' => $pa_form_data['ca_entity_labels_rel_type'],
+						'ca_occurrence_labels_rel_type' => $pa_form_data['ca_occurrence_labels_rel_type'],
+						'ca_places_labels_rel_type' => $pa_form_data['ca_places_labels_rel_type'],
+						'ca_object_labels_rel_type' => $pa_form_data['ca_object_labels_rel_type']
+					)
 				)),
 				'label' => ($vs_field_label) ? $vs_field_label :  $t_instance->getDisplayLabel($vs_field),
 				'name' => $bundle
@@ -1402,6 +1411,16 @@ class ca_search_forms extends BundlableLabelableBaseModelWithAttributes {
                                         $vs_query_element = $va_data['value_longtext1'];
                                         break;
                                 }
+
+								// #3 Caso a busca seja por um campo de relacionamento,
+								// vamos adicionar o tipo de relacionamento, se selecionado
+								// FRED 26/2/2021
+								
+								if ($_REQUEST[$va_tmp[0] . '_rel_type'])
+								$vs_element = $vs_element . '/' . $_REQUEST[$va_tmp[0] . '_rel_type'];
+							
+								// FIM #3
+
                                 $va_query_elements[] = "({$vs_element}:{$vs_query_element})";
                             }
 							break;

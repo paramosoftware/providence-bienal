@@ -6406,7 +6406,7 @@ if ((!isset($pa_options['dontSetHierarchicalIndexing']) || !$pa_options['dontSet
 			}
 		}
 		$va_tmp = explode('.', $ps_field);
-		
+
 		$attributes = caGetOption('attributes', $pa_options, null);
 		if(!is_array($attributes)) { $attributes = []; }
 		
@@ -6441,7 +6441,100 @@ if ((!isset($pa_options['dontSetHierarchicalIndexing']) || !$pa_options['dontSet
 			if (is_null($value) && $use_current_row_value) {
 				$value = $this->get($ps_field);
 			}
+
+			// #8 Código para acrescentar tipos de relacionamento para um campo de relacionamento
+			// $pa_options['table_num'] armazena a tabela referência desse formulário de busca
+			// $this->tableNum() armazena a tabela referência do campo de busca
+			// Se ( $pa_options['table_num'] != $this->tableNum() ), então trata-se de um campo de relacionamento
+			// FRED 26/2/2021
 			
+			$vs_select_element = '';
+
+			if ($pa_options['table_num'] != $this->tableName())
+			{
+				$vs_relationship_table = '';
+
+				switch ($pa_options['table_num'])
+				{
+					case 57:
+						switch ($this->tableName())
+						{
+							case 'ca_entity_labels':
+								$vs_relationship_table = 'ca_objects_x_entities';
+								break;
+								
+							case 'ca_occurrence_labels':
+								$vs_relationship_table = 'ca_objects_x_occurrences';
+								break;
+							
+							case 'ca_place_labels':
+								$vs_relationship_table = 'ca_objects_x_places';
+								break;									
+						}							
+						break;
+						
+					case 20:
+						switch ($this->tableName())
+						{
+							case 'ca_occurrence_labels':
+								$vs_relationship_table = 'ca_entities_x_occurrences';
+								break;
+							
+							case 'ca_place_labels':
+								$vs_relationship_table = 'ca_entities_x_places';
+								break;									
+						}							
+						break;
+						
+					case 67:
+						switch ($this->tableName())
+						{
+							case 'ca_object_labels':
+								$vs_relationship_table = 'ca_objects_x_occurrences';
+								break;
+								
+							case 'ca_entity_labels':
+								$vs_relationship_table = 'ca_entities_x_occurrences';
+								break;
+							
+							case 'ca_place_labels':
+								$vs_relationship_table = 'ca_places_x_occurrences';
+								break;
+						}							
+						break;
+				}
+				
+				if ($vs_relationship_table)
+				{
+					include_once(__CA_MODELS_DIR__.'/ca_relationship_types.php');
+
+					$t_rel = new ca_relationship_types();
+					
+					$va_rels = $t_rel->getRelationshipInfo($vs_relationship_table);
+					
+					$va_rel_opts = array();
+					$va_rel_opts['-'] = null;
+
+					foreach($va_rels as $vn_type_id => $va_rel_type_info) 
+					{
+						if (!$va_rel_type_info['parent_id']) { continue; }
+
+						$va_rel_opts[$va_rel_type_info['typename'].'/'.$va_rel_type_info['typename_reverse']] = $va_rel_type_info['type_id'];
+					}
+					
+					ksort($va_rel_opts);
+					
+					$vs_input_name = $this->tableName() . '_rel_type';
+
+					$va_attr = array();
+					$va_opts = array('value' => $pa_options['selected_relationship_types'][$vs_input_name]);
+					
+					$vs_select_element = caHTMLSelect($vs_input_name, $va_rel_opts, $va_attr, $va_opts);
+				}
+			}
+			
+			// FIM #8
+
 			return $this->htmlFormElement($va_tmp[1], '^ELEMENT', array_merge($pa_options, array(
 					'name' => $n.(caGetOption('autocomplete', $pa_options, false) ? "_autocomplete" : ""),
 					'id' => caGetOption('id', $pa_options, str_replace(".", "_", caGetOption('name', $pa_options, $ps_field))).(caGetOption('autocomplete', $pa_options, false) ? "_autocomplete" : ""),
@@ -6454,7 +6547,7 @@ if ((!isset($pa_options['dontSetHierarchicalIndexing']) || !$pa_options['dontSet
 					'no_tooltips' => true,
 					'placeholder' => $pa_options['placeholder'] ?? null,
 					'attributes' => $attributes
-			)));
+			))) . $vs_select_element;
 		}
 		
 		return null;
