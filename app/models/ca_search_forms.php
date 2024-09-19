@@ -1460,6 +1460,18 @@ class ca_search_forms extends BundlableLabelableBaseModelWithAttributes {
 				}
 			}
 		}
+		
+
+		// #1 Estamos acrescentando à força, se existir, o valor do parâmetro de busca "parent_id", uma vez que
+		// não é possível acrescentar esse campo no form de busca via interface do sistema
+		// FRED 5/2/2021
+
+		if (isset($pa_form_content['ca_objects_parent_id']))
+			$va_values['ca_objects.parent_id'] = $pa_form_content['ca_objects_parent_id'];
+			
+		// FIM #1
+
+
 		return $va_values;
 	}
 	# ------------------------------------------------------

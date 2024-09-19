@@ -122,6 +122,26 @@ class BaseAdvancedSearchController extends BaseRefineableSearchController {
 			}
 		}
 
+		// #1 Vou armazenar em $va_hierarchy_elements os códigos dos elementos selecionados
+		// nos campos de busca por nível hierárquico
+		// FRED 5/2/2021
+		
+		$va_hierarchy_elements = array();
+
+		if (isset($_REQUEST['parent_id_1']))
+			$va_hierarchy_elements['parent_id_1'] = $_REQUEST['parent_id_1'];
+			
+		if (isset($_REQUEST['parent_id_2']))
+			$va_hierarchy_elements['parent_id_2'] = $_REQUEST['parent_id_2'];
+			
+		if (isset($_REQUEST['parent_id_3']))
+			$va_hierarchy_elements['parent_id_3'] = $_REQUEST['parent_id_3'];
+			
+		if (isset($_REQUEST['parent_id_4']))
+			$va_hierarchy_elements['parent_id_4'] = $_REQUEST['parent_id_4'];
+		
+		/// FIM
+
 		if ($this->request->getParameter('reset', pString) == 'clear') {
 			$vs_search = '';
 			$vb_is_new_search = true;
@@ -188,6 +208,16 @@ class BaseAdvancedSearchController extends BaseRefineableSearchController {
 			$vo_result->setOption('prefetch', $vn_items_per_page);
 
 			$this->opo_result_context->setParameter('form_data', $va_form_data);
+
+
+			// #2 Passando $va_hierarchy_elements (elementos selecionados dos campos de busca por nível hierárquico)
+			// para ser usado em getAdvancedSearchForm
+			/// FRED 5/2/2021
+			
+			$this->opo_result_context->setParameter('hierarchy_elements', $va_hierarchy_elements);
+			
+			/// FIM #2
+
 
 			// #4 Passando para getAdvancedSearchForm todos os tipos de relacionamento selecionados
 			/// FRED 26/2/2021
@@ -352,6 +382,17 @@ class BaseAdvancedSearchController extends BaseRefineableSearchController {
 
 		$this->view->setVar('form_data', $va_form_data);
 		$this->view->setVar('form_elements', $t_form->getHTMLFormElements($this->request, $va_form_data));
+		
+
+		// #3 Passando $va_hierarchy_elements (elementos selecionados dos campos de busca por nível hierárquico)
+		// para ser usado na View
+		/// FRED 5/2/2021
+		
+		$this->view->setVar('hierarchy_elements', $this->opo_result_context->getParameter('hierarchy_elements'));
+		
+		/// FIM
+
+
 		$this->view->setVar('t_form', $t_form);
 		$this->view->setVar('settings', $t_form->getSettings());
 		$this->view->setVar('form_id', $vn_form_id);

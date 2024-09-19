@@ -28,6 +28,7 @@
  	 
 	$vo_result = $this->getVar('result');
 	
+	$this->setVar('tablename','ca_objects');
 	
  	print $this->render('Search/search_advanced_controls_html.php');
  ?>
