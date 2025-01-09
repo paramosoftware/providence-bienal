@@ -6216,6 +6216,135 @@ div.dialogHeader {
     -webkit-border-radius:4px;
 }
 
+/* Set home location */
+#caSetHomeLocationPanel {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    width: 800px;
+    display: none;
+    margin: 0px;
+    padding:0px !important;
+    z-index: 31000;			/* needs to be on top of menu bar, which has z-index=30000 */
+    background-color: #FFFFFF;
+    border-radius:4px;
+    -moz-border-radius:4px;
+    -webkit-border-radius:4px;
+    
+    min-height: 300px;
+}
+
+/* Media chooser */
+#caMediaBrowserPanel {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    width: 800px;
+    display: none;
+    margin: 0px;
+    padding:0px !important;
+    z-index: 31000;			/* needs to be on top of menu bar, which has z-index=30000 */
+    background-color: #FFFFFF;
+    border-radius:4px;
+    -moz-border-radius:4px;
+    -webkit-border-radius:4px;
+    
+    min-height: 300px;
+}
+
+#caMediaBrowserPanelContentArea {
+    padding: 10px;
+}
+
+#caMediaBrowserPanelDirectoryBrowser {
+    height: 225px;
+}
+
+
+/* Editor summary download options */
+#caSummaryDownloadOptionsPanel {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    width: 550px;
+    display: none;
+    margin: 0px;
+    padding:0px !important;
+    border: 2px solid #999999;
+    z-index: 31000;			/* needs to be on top of menu bar, which has z-index=30000 */
+    background-color: #FFFFFF;
+}
+
+#caSummaryDownloadOptionsPanelOptions {
+    font-size: 12px;
+	color: #333;
+	line-height: 1.4em;
+	padding: 10px;
+	margin: 25px 0px 0px 0px;
+	background-color: #eee;
+	border-radius: 5px;
+	display: none;
+	overflow-y: auto;
+	max-height: 350px;
+}
+
+#caLabelsDownloadOptionsPanelOptions, #caResultsDownloadOptionsPanelOptions {
+    font-size: 12px;
+	color: #333;
+	line-height: 1.4em;
+	padding: 10px;
+	margin: 25pxpx 0px 0px 0px;
+	background-color: #eee;
+	border-radius: 5px;
+	display: none;
+	overflow-y: auto;
+	max-height: 300px;
+}
+
+#caSummaryDownloadOptionsPanelOptions div.col, #caLabelsDownloadOptionsPanelOptions div.col, #caResultsDownloadOptionsPanelOptions div.col {
+    margin-bottom: 5px;
+}
+
+#caSummaryDownloadOptionsPanel .close a, #caLabelsDownloadOptionsPanelOptions .close a, #caResultsDownloadOptionsPanelOptions .close a {
+    text-decoration:none;
+    font-size:16px;
+}
+
+#caSummaryDownloadOptionsPanelContentArea {
+    font: 12px "Helvetica Neue", Arial, Helvetica, Sans-serif;
+    font-weight: normal;
+    padding:10px;
+}
+
+#caSummaryDownloadOptionsPanelControlButtons {
+    width: 490px;
+    text-align: center;
+}
+
+#caSummaryDownloadOptionsPanelControlButtons table {
+    width: 100%;
+}
+
+.caSummaryDownloadOptionsPanelAlertText {
+    font-size: 14px;
+    padding: 15px;
+}
+
+.caSummaryDownloadOptionsPanelAlertControls {
+    font-size: 14px;
+    height: 35px;
+    margin-bottom: 10px;
+}
+
+table.caSummaryDownloadOptionsPanelAlertControls {
+    margin-left:auto;
+    margin-right:auto;
+}
+
+.caSummaryDownloadOptionsPanelAlertControl {
+    font-size: 12px;
+}
+
 /* Quick add */
 .caRelationQuickAddPanel {
     position: fixed;
@@ -7313,3 +7442,134 @@ div.caResultsComplexDataEditorErrorContainer {
 	text-align:bottom;
 }
 
+/* "New" ca_object_representations_bundle */
+.mediaUploadContainer {
+	width:700px;
+	margin-top: 14px;
+}
+
+.mediaUploadInfoArea {
+	float: right; 
+	width: 460px;
+}
+
+.mediaUploadEditArea {
+	float: right; 
+	width: 570px;
+}
+
+.mediaUploadStatus {
+    font-size:16px;
+    color: #828282;
+    text-align: left;
+    padding: 10px;
+    line-height:1.3em;
+    overflow: hidden;
+    height: 2.4em;
+}
+
+.mediaUploadArea {
+	border: 1px dashed #ccc; 
+	text-align: center; 
+	padding: 0px; 
+	display: block;
+	width: 120px;
+	height: 120px;
+}
+
+.mediaUploadAreaMessage {
+	font-size: 15px; 
+	color: #333;
+	margin-top: 40px;
+}
+
+.mediaUploadAreaMessage:hover {
+	cursor: pointer;
+}
+
+.mediaUploadAreaMessageCount {
+	font-size: 9px;
+}
+
+div.objectRepresentationListImage {
+    width: 120px;
+}
+
+div.objectRepresentationListImageContainer {
+	float: left; 
+	width: 120px;
+}
+
+div.objectRepresentationMetadataEditorContainer {
+    display: none;
+	font-size: 10px;
+	overflow: auto;
+	line-height: 14px;
+	font-weight: normal;
+	color: #000000;
+}
+
+div.objectRepresentationNewMetadataEditorContainer {
+    display: none;
+    padding: 10px;
+}
+
+div.objectRepresentationMetadataEditorDoneButton {
+    float: none;
+    clear: both;
+    width: 100%;
+    text-align: center;
+}
+
+.objectRepresentationMetadataEditorMediaRightCol {
+	float: right; 
+	width: 110px;
+}
+
+.objectRepresentationMetadataEditorMediaRightCol .fa {
+	font-size:18px;
+	padding-right:5px;
+}
+
+.objectRepresentationAddForm {
+
+}
+
+.objectRepresentationRelateForm {
+    display: none;
+}
+
+.mediaMetadataDisplay {
+	font-weight: normal;
+	font-size: 12px;
+}
+
+div.mediaMetadataActionButton {
+    margin: 10px 0 0 0;
+    font-weight: normal;
+    font-size: 12px;
+}
+
+div.mediaMetadataActionButton img{
+	margin-right:5px;
+}
+
+div.mediaMetadataActionButton a, div.mediaMetadataActionButton span a {
+    text-decoration: none;
+    color: #000;
+}
+
+p.abbreviatedPath, div.abbreviatedPath, span.abbreviatedPath {
+	cursor: help;
+}
+
+.bundleLabelError code, .notification-error-box code {
+    font-family: monospace, serif;
+    font-size: 1em;
+    padding: 2px;
+    margin: 1px;
+    border: 1px solid #ddd;
+    background-color: #f8f8f8;
+    border-radius: 3px;
+    white-space: nowrap;
+}
