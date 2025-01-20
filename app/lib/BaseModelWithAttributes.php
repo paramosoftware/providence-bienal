@@ -1113,7 +1113,7 @@ class BaseModelWithAttributes extends BaseModel implements ITakesAttributes {
 	 */
 	public function get($ps_field, $pa_options=null) {
 		if (!is_array($pa_options)) { $pa_options = array(); }
-		
+
 		$vs_template = 				(isset($pa_options['template'])) ? $pa_options['template'] : null;
 		$vs_delimiter = 			(isset($pa_options['delimiter'])) ? $pa_options['delimiter'] : ' ';
 		$vb_return_as_array = 		(isset($pa_options['returnAsArray'])) ? (bool)$pa_options['returnAsArray'] : false;
@@ -1128,7 +1128,7 @@ class BaseModelWithAttributes extends BaseModel implements ITakesAttributes {
 	
 		// does get refer to an attribute?
 		$va_tmp = explode('.', $ps_field);
-		
+
 		$pa_options = array_merge($pa_options, array('indexByRowID' => true));		// force arrays to be indexed by current row_id
 		
 		$t_instance = $this;
@@ -1167,7 +1167,7 @@ class BaseModelWithAttributes extends BaseModel implements ITakesAttributes {
 				} 
 			}
 		}
-		
+
 		switch(sizeof($va_tmp)) {
 			# -------------------------------------
 			case 1:		// simple name
@@ -2904,6 +2904,8 @@ class BaseModelWithAttributes extends BaseModel implements ITakesAttributes {
 			foreach($va_vals as $vn_id => $va_vals_by_locale) {
 				foreach($va_vals_by_locale as $vn_locale_id => $va_vals_by_attr_id) {
 					foreach($va_vals_by_attr_id as $vn_attribute_id => $va_val) {
+						if (!isset($va_val['locale_id'])) continue;
+						
 						$va_val['locale_id'] = ($vn_locale_id) ? $vn_locale_id : $g_ui_locale_id;
 
 						$t_dupe->addAttribute($va_val, $vs_element_code);
