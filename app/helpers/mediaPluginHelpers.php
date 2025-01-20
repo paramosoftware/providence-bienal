@@ -1153,16 +1153,17 @@ function caGetPDFInfo($ps_filepath) {
 			} while((sizeof($va_output) > 0) && ($va_tmp[0] !== 'PDF'));
 		}
 	}
-	
+
 	// try imagemagick
 	if ((!$o_config->get('dont_use_imagemagick_to_identify_pdfs')) && caMediaPluginImageMagickInstalled()) {
 		$vs_imagemagick_path = caGetExternalApplicationPath('imagemagick');
 		caExec($vs_imagemagick_path.'/identify -format "%m;%w;%h;%p\n" '.caEscapeShellArg($ps_filepath).(caIsPOSIX() ? " 2> /dev/null" : ""), $va_output, $vn_return);
-	
-		array_pop($va_output); // last line is blank
+
+		//array_pop($va_output); // last line is blank
 		if (is_array($va_output) && (sizeof($va_output) > 0)) {
 			do {
 				$va_tmp = explode(';', array_shift($va_output));
+
 				if ($va_tmp[0] === 'PDF') {
 					return array(
 						'width' => intval($va_tmp[1]),
