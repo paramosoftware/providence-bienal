@@ -127,9 +127,12 @@ class LabelableBaseModelWithAttributes extends BaseModelWithAttributes implement
 		
 		$effective_date = caGetOption(['effective_date', 'effectiveDate'], $pa_options, null);
 		$label_access = caGetOption(['access', 'label_access', 'labelAccess'], $pa_options, 0);
+
+		if ($pb_is_preferred && ($label_access == "")) $label_access = "1";
+
 		$label_checked = caGetOption(['checked', 'label_checked', 'labelChecked'], $pa_options, 0);
 		$source_info = caGetOption(['source_info', 'sourceInfo'], $pa_options, null);
-		
+	
 		$vs_table_name = $this->tableName();
 		
 		if (!($t_label = Datamodel::getInstanceByTableName($label = $this->getLabelTableName()))) { return null; }
@@ -233,9 +236,12 @@ class LabelableBaseModelWithAttributes extends BaseModelWithAttributes implement
 		
 		$effective_date = caGetOption(['effective_date', 'effectiveDate'], $pa_options, null);
 		$label_access = caGetOption(['access', 'label_access', 'labelAccess'], $pa_options, 0);
+
+		if ($pb_is_preferred && ($label_access == "")) $label_access = "1";
+		
 		$label_checked = caGetOption(['checked', 'label_checked', 'labelChecked'], $pa_options, 0);
 		$source_info = caGetOption(['source_info', 'sourceInfo'], $pa_options, null);
-		
+
 		$vs_table_name = $this->tableName();
 		
 		if (!($t_label = Datamodel::getInstanceByTableName($this->getLabelTableName()))) { return null; }
