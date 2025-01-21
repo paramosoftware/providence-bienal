@@ -159,7 +159,7 @@ function fetchDataForBundles($sresult, array $bundles, array $options=null) : ar
 							'dataType' => "Text",
 							'values' => [
 								[
-									'value' => $sresult->getWithTemplate($f, ['checkAccess' => $check_access, 'primaryIDs' => caGetOption('primaryIDs', $options, null)]),
+									'value' => $sresult->getWithTemplate($f, array_merge($pt['options'] ?? [], ['checkAccess' => $check_access, 'primaryIDs' => caGetOption('primaryIDs', $options, null)])),
 									'locale' => null,
 									'subvalues' => null,
 									'id' => null,
@@ -319,7 +319,7 @@ function fetchDataForBundles($sresult, array $bundles, array $options=null) : ar
 								if($is_set) {
 									// Attribute level
 									$values[] = [
-										'id' => $id,	// attribute_id
+										'id' => is_numeric($id) ? $id : $c,	// attribute_id
 										'value_id' => $sub_field_values[$sf.'_value_id'],
 										'locale' => $locale,
 										'value' => $v,

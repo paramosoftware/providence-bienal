@@ -1003,7 +1003,7 @@ class ca_editor_ui_screens extends BundlableLabelableBaseModelWithAttributes {
 								'takesLocale' => false,
 								'default' => '',
 								'label' => _t('Item color'),
-								'description' => _t('If set item that are not first or last in list will use this color.')
+								'description' => _t('If set items that are not first or last in list will use this color.')
 							),
 							'colorLastItem' => array(
 								'formatType' => FT_TEXT,
@@ -1123,7 +1123,7 @@ class ca_editor_ui_screens extends BundlableLabelableBaseModelWithAttributes {
 									_t('Descending') => 'DESC'
 								),
 								'label' => _t('Initial sort direction'),
-								'description' => _t('Direction of sort, when not in a user-specified order.')
+								'description' => _t('Direction of sort, when sort is specified.')
 							),
 							'disableSorts' => array(
 								'formatType' => FT_TEXT,
@@ -1240,7 +1240,7 @@ class ca_editor_ui_screens extends BundlableLabelableBaseModelWithAttributes {
 							'multiple' => false,
 							'width' => "475px", 'height' => "1",
 							'label' => _t('Representation auto-complete lookup placeholder text'),
-							'description' => _t('Placeholder text to display in representation autocomplete search box when linking n existing representation to a record. (New UI only)')
+							'description' => _t('Placeholder text to display in representation autocomplete search box when linking an existing representation to a record. (New UI only)')
 						);
 						
 						$va_additional_settings['dontAllowRelationshipsToExistingRepresentations'] = array(
@@ -1697,7 +1697,7 @@ class ca_editor_ui_screens extends BundlableLabelableBaseModelWithAttributes {
 									'default' => 1,
 									'width' => "20px", 'height' => 1,
 									'label' => _t('Number of columns in component display'),
-									'description' => _t('Number of columns use when displaying component list.')
+									'description' => _t('Number of columns to use when displaying component list.')
 								];
 								break;
 							case 'circulation_status':
@@ -2124,11 +2124,78 @@ class ca_editor_ui_screens extends BundlableLabelableBaseModelWithAttributes {
 										'default' => false,
 										'label' => _t('Show batch editing button?'),
 										'description' => _t('If checked an option to batch edit contents will be displayed.')
-									)
+									),
+									'showCount' => array(
+										'formatType' => FT_NUMBER,
+										'displayType' => DT_CHECKBOXES,
+										'width' => 10, 'height' => 1,
+										'takesLocale' => false,
+										'default' => 0,
+										'label' => _t('Show relationship count in header?'),
+										'description' => _t('If checked the number of relationships will be displayed in the header for the field.')
+									),
+									'numPerPage' => array(
+										'formatType' => FT_NUMBER,
+										'displayType' => DT_FIELD,
+										'default' => 100,
+										'width' => "5", 'height' => 1,
+										'label' => _t('Number of items to load per page'),
+										'description' => _t('Maximum number of items to render on initial load.')
+									),
+									'disableSorts' => array(
+										'formatType' => FT_TEXT,
+										'displayType' => DT_CHECKBOXES,
+										'width' => 10, 'height' => 1,
+										'takesLocale' => false,
+										'default' => '0',
+										'label' => _t('Disable user-selectable sorting options?'),
+										'hideOnSelect' => ['allowedSorts'],
+										'description' => _t('If checked sorting of related items will be disabled.')
+									),
+									'sortDirection' => array(
+										'formatType' => FT_TEXT,
+										'displayType' => DT_SELECT,
+										'width' => "200px", 'height' => "1",
+										'takesLocale' => false,
+										'default' => 'ASC',
+										'options' => array(
+											_t('Ascending') => 'ASC',
+											_t('Descending') => 'DESC'
+										),
+										'label' => _t('Initial sort direction'),
+										'description' => _t('Direction of sort, when sort is specified.')
+									),
 								);
+								$policy_tables = ca_objects::getHistoryTrackingCurrentValuePolicyTargets();
+								
+								foreach($policy_tables as $t) {
+									$tl = Datamodel::getTableProperty($t, 'NAME_SINGULAR');
+									$va_additional_settings["sort_{$t}"] = [
+										'formatType' => FT_TEXT,
+										'displayType' => DT_SELECT,
+										'width' => "475px", 'height' => 1,
+										'takesLocale' => false,
+										'default' => '',
+										'label' => _t('Initially sort %1 policies using', $tl),
+										'showSortableBundlesFor' => ['table' => $t],
+										'description' => _t('Default sort for %1 policies.', $tl)
+									];
+								}
+								foreach($policy_tables as $t) {
+									$tl = Datamodel::getTableProperty($t, 'NAME_SINGULAR');
+									$va_additional_settings["allowedSorts_{$t}"] = [
+										'formatType' => FT_TEXT,
+										'displayType' => DT_SELECT,
+										'showSortableBundlesFor' => ['table' => $t],
+										'default' => null,
+										'multiple' => true,
+										'width' => "475px", 'height' => 5,
+										'label' => _t('User-selectable sort options for %1 policies', $tl),
+										'description' => _t('Limits user-selectable sort options on this bundle.')
+									];
+								}
 								break;
 							case 'ca_set_items':
-								require_once(__CA_MODELS_DIR__."/ca_sets.php");
 								$t_set = new ca_sets();
 								if ($this->inTransaction()) { $t_set->setTransaction($this->getTransaction()); }
 								
@@ -2251,7 +2318,7 @@ class ca_editor_ui_screens extends BundlableLabelableBaseModelWithAttributes {
 			
 			TooltipManager::add(
 				"#uiEditorBundle_{$bundle_normalized}",
-				"<h2>{$vs_label}</h2>".
+				"<div class='tooltipHead'>{$vs_label}</div>".
 				_t("Bundle name").": {$bundle_normalized}<br />".
 				((strlen($vs_description) > 0) ? _t("Description").": {$vs_description}<br />" : "")
 			);
@@ -2507,7 +2574,7 @@ class ca_editor_ui_screens extends BundlableLabelableBaseModelWithAttributes {
 			$vs_description = $t_instance->getDisplayDescription($table.'.'.$vs_bundle_proc);
 			TooltipManager::add(
 				"#uiEditor_{$vn_placement_id}",
-				"<h2>{$vs_label}</h2>".
+				"<div class='tooltipHead'>{$vs_label}</div>".
 				_t("Bundle name").": {$vs_bundle_proc}<br />".
 				((strlen($vs_description) > 0) ? _t("Description").": {$vs_description}<br />" : "")
 			);
