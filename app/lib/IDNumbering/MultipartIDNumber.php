@@ -157,8 +157,8 @@ class MultipartIDNumber extends IDNumber {
 		if ($separator && $this->formatHas('PARENT', 0)) {
 			// starts with PARENT element so explode in reverse since parent value may include separators
 			$v_proc = preg_replace("!^".preg_quote($this->getParentValue(), '!')."!", "_PARENT_", $value);
-
-      $element_vals = explode($separator, $v_proc);
+	
+			$element_vals = explode($separator, $v_proc);
 
 			$i = 0;
 			foreach ($this->getElements() as $element_info) {
