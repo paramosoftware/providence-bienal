@@ -163,6 +163,9 @@ function caExtractValuesByLocale($pa_locale_rules, $pa_values, $pa_options=null)
 	return ($pa_options['returnList']) ? array_values($va_values) : $va_values;
 }
 # ------------------------------------------------------------------------------------------------
+/**
+ *
+ */
 function caExtractValuesByUserLocale($pa_values, $ps_item_locale=null, $pa_preferred_locales=null, $pa_options=null) {
 	return caExtractValuesByLocale(caGetUserLocaleRules($ps_item_locale, $pa_preferred_locales), $pa_values, $pa_options);
 }
@@ -215,12 +218,16 @@ function caExtractSettingsValueByUserLocale(string $setting, array $setting_valu
 		return $v[$g_ui_locale];
 	}
 	
-	// Try to find setting with same language
+	// Try to find setting with same locale
+	if($setting_values[$setting][$g_ui_locale] ?? null) {
+		return $setting_values[$setting][$g_ui_locale];
+	}
+	
+	// Fall back and try to find setting with same language
 	$l = explode('_', $g_ui_locale);
 	$l = $l[0];
-	
 	foreach($setting_values[$setting] as $locale => $val) {
-		if(preg_match("!^{$l}_!", $locale)) {
+		if(preg_match("!^{$l}(_[A-Za-z]{2,3}|$)$!", $locale)) {
 			return $val;
 		}
 	}
@@ -577,7 +584,7 @@ jQuery('#caReferenceHandlingToRemapToHierBrowserSearch').autocomplete(
 	}
 	$vs_output .= "</script>\n";
 
-	TooltipManager::add('#caReferenceHandlingToCount', "<h2>"._t('References to this %1', $t_instance->getProperty('NAME_SINGULAR'))."</h2>\n".join("\n", $va_reference_to_buf));
+	TooltipManager::add('#caReferenceHandlingToCount', "<div class='tooltipHead'>"._t('References to this %1', $t_instance->getProperty('NAME_SINGULAR'))."</div>\n".join("\n", $va_reference_to_buf));
 
 
 	if (sizeof($va_reference_from_buf)) {
@@ -626,7 +633,7 @@ jQuery('#caReferenceHandlingToRemapToHierBrowserSearch').autocomplete(
 		$vs_output .= "});";
 		$vs_output .= "</script>\n";
 
-		TooltipManager::add('#caReferenceHandlingFromCount', "<h2>"._t('References by this %1', $t_instance->getProperty('NAME_SINGULAR'))."</h2>\n".join("<br/>\n", $va_reference_from_buf));
+		TooltipManager::add('#caReferenceHandlingFromCount', "<div class='tooltipHead'>"._t('References by this %1', $t_instance->getProperty('NAME_SINGULAR'))."</div>\n".join("<br/>\n", $va_reference_from_buf));
 	}
 
 	return $vs_output;
@@ -636,17 +643,43 @@ jQuery('#caReferenceHandlingToRemapToHierBrowserSearch').autocomplete(
  *
  */
 function caHierarchyToolsMergeWarningBox($request, $t_instance, $item_name, $parameters) {
+	$table_name = $t_instance->tableName();
+	$config = Configuration::load();
+	//$container_types = $config->get("{$table_name}_container_types"); 
+	$component_types = $config->get("{$table_name}_component_types"); 
+	
+	$target_type = mb_strtolower($t_instance->getTypeName($component_types[0], ['useSingular' => false]));
+	
 	if ($warning = isset($parameters['warning']) ? $parameters['warning'] : null) {
-		$warning = '<br/>'.$warning;
+		$warning = '<span class="formLabelWarning"><i class="caIcon fa fa-exclamation-triangle fa-1x"></i> '.$warning.'</span><br/>';
 	} else {
-		$warning = _t("<br/>Proceeding will permanently delete all component %1", 'items');
+		$warning = '<span class="formLabelWarning"><i class="caIcon fa fa-exclamation-triangle fa-1x"></i> '._t('Proceeding will permanently delete all component %1', $target_type).'</span><br/>';
 	}
-
+	
+	$warn_metadata = false;
+	
+	$child_ids = $t_instance->getHierarchyChildren(null, ['idsOnly' => true]);
+	if(is_array($child_ids) && sizeof($child_ids)) {
+		$t_child = Datamodel::getInstance($t_instance->tableName());
+		
+		foreach($child_ids as $child_id) {
+			if($t_child->load($child_id)) {
+				if($warn_metadata = $t_child->metadataIsSet()) {
+					break;
+				}
+			}
+		}	
+	}
+	
+	if($warn_metadata) {
+		$warning .= '<span class="formLabelWarning"><i class="caIcon fa fa-exclamation-triangle fa-1x"></i> '._t("Metadata set on component %1 will be lost", $target_type).'</span><br/>';
+	}
+	
 	$editor_url = caEditorUrl($request, $t_instance->tableName(), $t_instance->getPrimaryKey(), true);
 
 	$output = caFormTag($request, 'merge', 'caHierarchyMergeForm', null, 'post', 'multipart/form-data', '_top', ['noCSRFToken' => false,'disableUnsavedChangesWarning' => true]);
 	$output .= "<div class='delete-control-box'>".caFormControlBox(
-		"<div class='delete_warning_box'>"._t('Really merge component %1 for %2? ', 'items', $item_name)."</div>".
+		"<div class='delete_warning_box'>"._t('Really merge component %1 into %2? ', $target_type, $item_name)."</div>".
 		'',
 		$warning,
 		caFormSubmitButton($request, __CA_NAV_ICON_DELETE__, _t("Merge"), 'caHierarchyMergeForm', []).
@@ -669,17 +702,25 @@ function caHierarchyToolsMergeWarningBox($request, $t_instance, $item_name, $par
 function caHierarchyToolsSplitWarningBox($request, $t_instance, $item_name, $parameters) {
 	if(!method_exists($t_instance, 'getRepresentationCount')) { return null; }
 	
+	$table_name = $t_instance->tableName();
+	$config = Configuration::load();
+	$container_types = $config->get("{$table_name}_container_types"); 
+	$component_types = $config->get("{$table_name}_component_types"); 
+	
+	$item_type = mb_strtolower($t_instance->getTypeName($component_types[0], ['useSingular' => false]));
+	$target_type = mb_strtolower($t_instance->getTypeName($container_types[0], ['useSingular' => true]));
+	
 	if ($warning = isset($parameters['warning']) ? $parameters['warning'] : null) {
-		$warning = '<br/>'.$warning;
+		$warning = '<span class="formLabelWarning"><i class="caIcon fa fa-exclamation-triangle fa-1x"></i> '.$warning.'</span><br/>';;
 	} else {
-		$warning = _t("<br/>Proceeding will create %1 new component %2", $t_instance->getRepresentationCount(), 'items');
+		$warning = '<span class="formLabelWarning"><i class="caIcon fa fa-exclamation-triangle fa-1x"></i> '._t("Proceeding will create %1 new %2", $t_instance->getRepresentationCount(), $item_type).'</span><br/>';
 	}
 
 	$editor_url = caEditorUrl($request, $t_instance->tableName(), $t_instance->getPrimaryKey(), true);
 
 	$output = caFormTag($request, 'split', 'caHierarchySplitForm', null, 'post', 'multipart/form-data', '_top', ['noCSRFToken' => false,'disableUnsavedChangesWarning' => true]);
 	$output .= "<div class='delete-control-box'>".caFormControlBox(
-		"<div class='delete_warning_box'>"._t('Really split %1? ', $item_name)."</div>".
+		"<div class='delete_warning_box'>"._t('Really split %1 into %2? ', $target_type, $item_type)."</div>".
 		'',
 		$warning,
 		caFormSubmitButton($request, __CA_NAV_ICON_DELETE__, _t("Split"), 'caHierarchySplitForm', []).
@@ -1078,7 +1119,7 @@ function caEditorInspector($view, $options=null) {
 				$buf .= "<br/><div class='inspectorDeaccessioned'>"._t('Deaccessioned %1', $t_item->get('deaccession_date'))."</div>\n";
 				if ($vs_deaccession_notes = $t_item->get('deaccession_notes')) { TooltipManager::add(".inspectorDeaccessioned", $vs_deaccession_notes); }
 			} else {
-				if ($view->request->user->canDoAction('can_see_current_location_in_inspector_'.$table_name)) {
+				if (($table_name === 'ca_storage_locations') || $view->request->user->canDoAction('can_see_current_location_in_inspector_'.$table_name)) {
 					$is_home = $t_item->isInHomeLocation();
 					$inspector_current_value = null;
 					if (method_exists($t_item, "getHistory") && ($inspector_current_value_label = $t_item->getInspectorHistoryTrackingDisplayPolicy('label'))) {
@@ -1176,8 +1217,12 @@ function caEditorInspector($view, $options=null) {
 				}
 			}
 
-
-			$buf .= "<div class='recordTitle {$table_name}' style='width:190px; overflow:hidden;'>{$label}".(($show_idno) ? ($idno ? " ({$idno})" : '') : '')."</div>";
+			$buf .= "<div class='recordTitle {$table_name}' style='width:190px; overflow:hidden;'>{$label}";
+			
+			if($show_idno) {
+				$buf .= " ({$idno}) ";
+			}
+			$buf .= "</div>";
 			if (($table_name === 'ca_object_lots') && $t_item->getPrimaryKey()) {
 				$buf .= "<div id='inspectorLotMediaDownload'><strong>".((($num_objects = $t_item->numObjects(null, ['excludeChildObjects' => $view->request->config->get("exclude_child_objects_in_inspector_log_count")])) == 1) ? _t('Lot contains %1 object', $num_objects) : _t('Lot contains %1 objects', $num_objects))."</strong>\n";
 			}
@@ -1187,7 +1232,7 @@ function caEditorInspector($view, $options=null) {
 					$inspector_view->setVar('t_item', $t_item);
 					$buf .= $inspector_view->render('inspector_info.php');
 				}
-			}
+			}	
 		} else {
 			$parent_name = '';
 			if ($parent_id = $view->request->getParameter('parent_id', pInteger)) {
@@ -1377,7 +1422,7 @@ function caEditorInspector($view, $options=null) {
 		}
 		
 		// Download media in set
-		if(($table_name == 'ca_sets') && (sizeof($t_item->getItemRowIDs()) > 0)) {
+		if(($table_name == 'ca_sets') && (sizeof($t_item->getItemRowIDs() ?? []) > 0)) {
 			$tools [] = "<div id='inspectorSetMediaDownloadButton' class='inspectorActionButton'>".caNavLink($view->request, caNavIcon(__CA_NAV_ICON_DOWNLOAD__, '20px'), "button", $view->request->getModulePath(), $view->request->getController(), 'getSetMedia', array('set_id' => $t_item->getPrimaryKey(), 'download' => 1), array())."</div>\n";
 
 			TooltipManager::add('#inspectorSetMediaDownloadButton', _t("Download all media associated with records in this set"));
@@ -1411,7 +1456,7 @@ function caEditorInspector($view, $options=null) {
 					($vs_name ? _t('<strong>Created</strong><br/>%1 by %2', $vs_interval, $vs_name) : _t('<strong>Created</strong><br/>%1', $vs_interval)).
 					"</div>";
 
-				TooltipManager::add("#caInspectorCreationDate", "<h2>"._t('Created on')."</h2>"._t('Created on %1', caGetLocalizedDate($creation['timestamp'], array('dateFormat' => 'delimited'))));
+				TooltipManager::add("#caInspectorCreationDate", "<div class='tooltipHead'>"._t('Created on')."</div>"._t('Created on %1', caGetLocalizedDate($creation['timestamp'], array('dateFormat' => 'delimited'))));
 			}
 
 			if ($last_change['timestamp'] && ($creation['timestamp'] != $last_change['timestamp'])) {
@@ -1422,7 +1467,7 @@ function caEditorInspector($view, $options=null) {
 					($vs_name ? _t('<strong>Last changed</strong><br/>%1 by %2', $vs_interval, $vs_name) : _t('<strong>Last changed</strong><br/>%1', $vs_interval)).
 					"</div>";
 
-				TooltipManager::add("#caInspectorChangeDate", "<h2>"._t('Last changed on')."</h2>"._t('Last changed on %1', caGetLocalizedDate($last_change['timestamp'], array('dateFormat' => 'delimited'))));
+				TooltipManager::add("#caInspectorChangeDate", "<div class='tooltipHead'>"._t('Last changed on')."</div>"._t('Last changed on %1', caGetLocalizedDate($last_change['timestamp'], array('dateFormat' => 'delimited'))));
 			}
 
 			if (method_exists($t_item, 'getMetadataDictionaryRuleViolations') && is_array($violations = $t_item->getMetadataDictionaryRuleViolations()) && (($total_num_violations = (sizeof($violations))) > 0)) {
@@ -1468,7 +1513,7 @@ function caEditorInspector($view, $options=null) {
 					$more_info .= "<div id='caInspectorViolationsList'>".caNavIcon(__CA_NAV_ICON_ALERT__, "14px")." ".($num_violations_display = (($total_num_violations > 1) ? _t('%1 problems require attention', $total_num_violations) : _t('%1 problem requires attention', $total_num_violations)))."</div>\n"; 
 				}
 				if($num_violations_display) { 
-					TooltipManager::add("#caInspectorViolationsList", "<h2>{$num_violations_display}</h2><ol>".join("\n", $violation_messages)."</ol>\n");
+					TooltipManager::add("#caInspectorViolationsList", "<div class='tooltipHead'>{$num_violations_display}</div><ol>".join("\n", $violation_messages)."</ol>\n");
 				}
 			}
 
@@ -1492,11 +1537,11 @@ function caEditorInspector($view, $options=null) {
 		// Get component information
 		$object_container_types = $view->request->config->getList('ca_objects_container_types');
 		$object_component_types = $view->request->config->getList('ca_objects_component_types');
-		$takes_components = in_array($t_item->getTypeCode(), $object_container_types);
+		$takes_components = (method_exists($t_item, "getTypeCode") && (in_array($t_item->getTypeCode(), $object_container_types) || in_array('*', $object_container_types)));
 		
 		$can_add_component = (($table_name === 'ca_objects') && $t_item->getPrimaryKey() && ($view->request->user->canDoAction('can_create_ca_objects')) && ($t_item->canTakeComponents() || $t_item->isComponent()));
 
-		if($takes_components) {
+		if((($takes_components && isset($object_component_types[0])) || ($takes_components && in_array($t_item->getTypeCode(), $object_component_types)))) {
 			if (method_exists($t_item, 'getComponentCount')) {
 				$component_count = $t_item->getComponentCount();
 				if ($t_ui && ($component_list_screen = $t_ui->getScreenWithBundle("ca_objects_components_list", $view->request)) && ($vs_component_list_screen !== $view->request->getActionExtra())) { 
@@ -1517,21 +1562,39 @@ function caEditorInspector($view, $options=null) {
 			}
 			
 			// Component hierarchy tools
-			if(($table_name === 'ca_objects') && $view->request->config->get("ca_objects_component_allow_merge_unmerge") && $takes_components && isset($object_component_types[0])) {
+			if(($table_name === 'ca_objects') && $view->request->config->get("ca_objects_component_allow_merge_unmerge") && (($takes_components && isset($object_component_types[0])) || in_array($t_item->getTypeCode(), $object_component_types))) {
 				$container_type_name = mb_strtolower($t_item->getTypeName());
+				$container_target_type_name = $object_container_types[0];
 				$component_type_name = mb_strtolower(caGetListItemForDisplay('object_types', $object_component_types[0], ['return' => 'plural']));
 				if($component_count > 0) {
 					$tools [] = "<div id='inspectorHierarchyMerge' class='inspectorActionButton'>".caNavLink($view->request, caNavIcon(__CA_NAV_ICON_MERGE__, '20px'), "button", 'editor', 'HierarchyTools', 'merge', ['t' => 'ca_objects', 'id' => $t_item->getPrimaryKey()], [])."</div>\n";
 					TooltipManager::add('#inspectorHierarchyMerge', _t("Merge media from component %1 into this %2 and delete %1", $component_type_name, $container_type_name));
 				} elseif($t_item->getRepresentationCount() > 0) {
 					$tools [] = "<div id='inspectorHierarchySplit' class='inspectorActionButton'>".caNavLink($view->request, caNavIcon(__CA_NAV_ICON_SPLIT__, '20px'), "button", 'editor', 'HierarchyTools', 'split', ['t' => 'ca_objects', 'id' => $t_item->getPrimaryKey()], [])."</div>\n";
-					TooltipManager::add('#inspectorHierarchySplit', _t("Split media in this %1 into component %2", $container_type_name, $component_type_name));
+					TooltipManager::add('#inspectorHierarchySplit', _t("Split media in this %1 into %2 with component %3", $container_type_name, $container_target_type_name, $component_type_name));
 				}
 			}
 		}
 
 		if(sizeof($tools) > 0) {
 			$buf .= "<div id='toolIcons'>".join(" ", $tools)."</div><!--End tooIcons-->";
+		}
+		
+		$next_by_idno = $prev_by_idno = null;
+		if($view->request->config->get("{$table_name}_inspector_display_idno_sequence_navigation")) {
+			$next_by_idno = $t_item->getAdjacentByIdno('next');
+			$prev_by_idno = $t_item->getAdjacentByIdno('previous');
+		}					
+		if($prev_by_idno || $next_by_idno) {
+			$buf .= "<div style='text-align: center;'><strong>"._t('Sequence:')."</strong><br>\n";	
+			if($prev_by_idno) {
+				$buf .= caEditorLink($view->request, '&lt; '.$prev_by_idno['idno'], '', $table_name, $prev_by_idno['id']);
+			}
+			if($prev_by_idno && $next_by_idno) { $buf .= ' | '; }
+			if($next_by_idno) {
+				$buf .= caEditorLink($view->request, $next_by_idno['idno'].' &gt;', '', $table_name, $next_by_idno['id']);
+			}	
+			$buf .= "</div>";
 		}
 		
 		if($more_info) {
@@ -2383,13 +2446,19 @@ function caTableIsActive($pm_table) {
   */
 function caFilterTableList($pa_tables, $pa_options=null) {
 	$o_config = Configuration::load();
-
+	
+	// allow ca_object_representations by default as it's always active as object media, even when
+	// disabled as a top-level record type
+	if(!is_array($force_table_nums = caGetOption('alwaysAllowTableNums', $pa_options, [56]))) {
+		$force_table_nums = [];
+	}
+	
 	// assume table display names (*not actual database table names*) are keys and table_nums are values
 	$va_filtered_tables = array();
 	foreach($pa_tables as $vs_display_name => $vn_table_num) {
 		$vs_display_name = mb_strtolower($vs_display_name, 'UTF-8');
 
-		if (!caTableIsActive($vn_table_num)) { continue; }
+		if (!caTableIsActive($vn_table_num) && !in_array($vn_table_num, $force_table_nums, true)) { continue; }
 		$vs_table_name = Datamodel::getTableName($vn_table_num);
 		$va_filtered_tables[$vs_display_name] = $vn_table_num;
 	}
@@ -2471,17 +2540,62 @@ function caGetMediaDisplayInfo($ps_context, $ps_mimetype) {
  *
  * @return
  */
-function caGetDefaultMediaViewer($ps_mimetype) {
+function caGetMediaDisplayInfoForMimetype(string $context, string $mimetype) : ?array {
 	$o_config = Configuration::load();
 	$o_media_display_config = caGetMediaDisplayConfig();
 
-	if (!is_array($va_defaults = $o_media_display_config->getAssoc('default_viewers'))) { return null; }
+	if (!is_array($context = $o_media_display_config->getAssoc($context))) { return null; }
 
-	foreach($va_defaults as $vs_media_class => $va_info) {
-		if (!is_array($va_mimetypes = $va_info['mimetypes'])) { continue; }
+	if (!$mimetype) { return $context; }
+	foreach($context as $display_class => $display_class_info) {
+		if (!is_array($mimetypes = $display_class_info['mimetypes'])) { continue; }
 
-		if (in_array($ps_mimetype, $va_mimetypes)) {
-			return $va_info['viewer'];
+		if (in_array($mimetype, $mimetypes)) {
+			$display_class_info['display_class'] = $display_class;
+			return $display_class_info;
+		}
+	}
+	return null;
+}
+# ------------------------------------------------------------------------------------------------
+/**
+ *
+ *
+ * @param
+ *
+ * @return
+ */
+function caGetMediaDisplayInfoForDisplayClass(string $context, string $display_class) : ?array {
+	$o_config = Configuration::load();
+	$o_media_display_config = caGetMediaDisplayConfig();
+
+	if (!is_array($context = $o_media_display_config->getAssoc($context))) { return null; }
+
+	if(!$display_class) { return $context; }
+	if(isset($context[$display_class]) && is_array($context[$display_class])) {
+		return $context[$display_class];
+	}
+	return null;
+}
+# ------------------------------------------------------------------------------------------------
+/**
+ *
+ *
+ * @param
+ *
+ * @return
+ */
+function caGetDefaultMediaViewer(string $mimetype) : ?string {
+	$o_config = Configuration::load();
+	$o_media_display_config = caGetMediaDisplayConfig();
+
+	if (!is_array($defaults = $o_media_display_config->getAssoc('default_viewers'))) { return null; }
+
+	foreach($defaults as $media_class => $info) {
+		if (!is_array($mimetypes = $info['mimetypes'])) { continue; }
+
+		if (in_array($mimetype, $mimetypes)) {
+			return $info['viewer'];
 		}
 	}
 	return null;
@@ -3305,7 +3419,7 @@ function caProcessRelationshipLookupLabel($qr_rel_items, $pt_rel, $pa_options=nu
 	}
 
 	if($vb_include_inline_add_message && $ps_inline_create_message) {
-		array_push($va_initial_values, 
+		array_unshift($va_initial_values, 
 				array(
 					'label' => $ps_inline_create_message,
 					'id' => 0,
@@ -3314,7 +3428,7 @@ function caProcessRelationshipLookupLabel($qr_rel_items, $pt_rel, $pa_options=nu
 				)
 		);
 	} elseif ($vb_include_inline_add_does_not_exist_message && $ps_inline_create_does_not_exist_message) {
-		array_push($va_initial_values,
+		array_unshift($va_initial_values,
 				array(
 					'label' => $ps_inline_create_does_not_exist_message,
 					'id' => 0,
@@ -3323,7 +3437,7 @@ function caProcessRelationshipLookupLabel($qr_rel_items, $pt_rel, $pa_options=nu
 				)
 		);
 	} elseif ($vb_include_empty_result_message) {
-		array_push($va_initial_values,
+		array_unshift($va_initial_values,
 			array(
 				'label' => $ps_empty_result_message,
 				'id' => -1,
@@ -3800,7 +3914,7 @@ function caEditorBundleBatchEditorControls($request, $placement_id, $t_instance,
 	
 	$buf = '';
 	if(caGetOption('showBatchEditorButton', $options, false)) {
-		$buf = '<div class="button batchEdit">'.caNavLink($request, caNavIcon(__CA_NAV_ICON_BATCH_EDIT__, '15px')._t(' Batch edit all'), '', '*', '*', 'BatchEdit', ['placement_id' => $placement_id, 'primary_id' => $t_instance->getPrimaryKey(), 'screen' => $request->getActionExtra()]).'</div>';
+		$buf = '<div class="button batchEdit">'.caNavLink($request, "<span class='form-button'>".caNavIcon(__CA_NAV_ICON_BATCH_EDIT__, '15px')._t(' Batch edit')."</span>", 'form-button', '*', '*', 'BatchEdit', ['placement_id' => $placement_id, 'primary_id' => $t_instance->getPrimaryKey(), 'screen' => $request->getActionExtra()]).'</div>';
 	}
 	return $buf;
 }
@@ -3814,7 +3928,7 @@ function caEditorBundleBatchEditorControls($request, $placement_id, $t_instance,
  * @return bool
  */
 function caHomeLocationsEnabled(string $table, $type=null, array $options=null) {
-	if(!in_array($table, ['ca_objects', 'ca_object_lots', 'ca_object_representations', 'ca_collections'], true)) { return false; }
+	if(!in_array($table, ['ca_objects', 'ca_object_lots', 'ca_object_representations', 'ca_collections', 'ca_storage_locations'], true)) { return false; }
 	$o_config = Configuration::load();
 	if($type && (bool)$o_config->get("{$table}_{$type}_enable_home_location")) { return true; }
 	if($type && is_numeric($type) && ($t_instance = Datamodel::getInstance($table, true))) {	
@@ -3860,7 +3974,7 @@ function caReturnToHomeLocationControlForRelatedBundle($po_request, $ps_id_prefi
 	$interstitials = caGetOption('ca_storage_locations_setInterstitialElementsOnAdd', $settings, null);
 
 	$vs_buf = "<div id='{$ps_id_prefix}_editor_bundle_return_to_home_button' class='editorBundleReturnToHomeControl'>".
-		caJSButton($po_request, __CA_NAV_ICON_HOME__, _t("Return to home locations"), "{$ps_id_prefix}_return_to_home_locations", ['onclick' => "caReturnToHomeLocationToggleForm{$ps_id_prefix}(); return false;"], ['size' => '15px']).
+		caJSButton($po_request, __CA_NAV_ICON_HOME__, _t("Return home"), "{$ps_id_prefix}_return_to_home_locations", ['onclick' => "caReturnToHomeLocationToggleForm{$ps_id_prefix}(); return false;"], ['size' => '15px']).
 		"</div>";
 
 	$vs_buf .= "<div id='{$ps_id_prefix}_editor_bundle_return_to_home_controls_message' class='editorBundleReturnToHomeControlsMessage'></div>\n";
@@ -4253,6 +4367,149 @@ function caProcessBottomLineTemplateForPlacement($po_request, $pa_placement, $pr
 }
 # ------------------------------------------------------------------
 /**
+ * Return list of representations
+ *
+ * @param RequestHTTP $request The current request
+ * @param RepresentableBaseModel $subject = A model instance loaded with the subject (the record the media is shown in the context of. Eg. if a representation is shown for an object this is an instance for that object record)
+ * @param array $options Options include:
+ *		primaryOnly = return only primary representations. [Default is false]
+ *		currentRepClass = CSS class to apply to thumbnail of currently visible representation. [Default is "active"]
+ *		dontShowPlaceholder = Don't use placeholder when no representation is available. [Default is false]
+ *		display = media_display.conf display version to use. [Default is 'detail']
+ *		displayAnnotations = Mode of display for annotations on representation. Valid values are: viewer (in viewer), div (in external div with class #detailAnnotations), none (no display) [Default is none]
+ *		displayAnnotationTemplate = Template to use when formatting list of annotations [Default is the annotation title (^ca_representation_annotations.preferred_labels.name)]
+ *
+ * @return string HTML output
+ *
+ * @see caGetMediaViewerHTML
+ */
+function caRepresentationList($request, $subject, ?array $options=null) : ?array {
+	$detail_config = caGetDetailConfig()->get($subject->tableName());
+	$access_values = caGetUserAccessValues($request);
+	
+	$show_only_media_types = caGetOption('showOnlyMediaTypes', $options, null);
+	
+	$allow_download = caGetOption('allowMediaDownload', $options, false);
+	if(caGetOption('requireLoginForMediaDownload', $options, false) && !$request->isLoggedIn()) { 
+		$allow_download = false;
+	} else {
+		$require_roles_for_download = caGetOption('requireRoleForMediaDownload', $options, null);
+		if(is_array($require_roles_for_download) && sizeof($require_roles_for_download)) {
+			$allow_download = false;
+			if($request->isLoggedIn()) {
+				foreach($require_roles_for_download as $rrole) {
+					if($request->user->hasUserRole($rrole)) {
+						$allow_download = true;
+						break;
+					}
+				}
+			}
+		}
+	}
+	
+	// options
+	$versions = caGetOption('versions', $options, ['icon', 'small']);
+	$display_type = caGetOption('display', $options, 'detail');
+	
+	if($show_only_media_types && !is_array($show_only_media_types)) { $show_only_media_types = [$show_only_media_types]; }
+	if(is_array($show_only_media_types)) {
+		$show_only_media_types = array_map('strtolower', $show_only_media_types);
+	}
+	
+	$t_instance = null;
+	if(is_a($subject, 'RepresentableBaseModel')) {
+		$t_instance = $subject;
+	} elseif(is_a($subject, 'SearchResult')) {
+		$t_instance = $subject->getInstance();
+	} else {
+		return null;
+	}
+	if (method_exists($t_instance, 'filterNonPrimaryRepresentations')) { $t_instance->filterNonPrimaryRepresentations(false); }
+	
+	$qr = $t_instance->getRepresentationsAsSearchResult($options);
+	
+	$t_rep = new ca_object_representations();
+	$reps = [];
+	
+	$caption_template = caGetOption('mediaCaptionTemplate', $options, '???');
+	while($qr->nextHit()) {
+		$rep_id = $qr->get('ca_object_representations.representation_id');
+		$mimetype = $qr->get('ca_object_representations.mimetype');
+		
+		if(!($display_info = caGetMediaDisplayInfoForMimetype($display_type, $mimetype))) {
+			continue;
+		}
+		$download_info = caGetMediaDisplayInfoForMimetype('download', $mimetype);
+		if(is_array($show_only_media_types) && sizeof($show_only_media_types) && !in_array(strtolower($display_info['viewer']), $show_only_media_types)) {
+			continue;
+		}
+		
+		$display_version = $display_info['display_version'] ?? null;
+		
+		$iiif_url = $request->getBaseUrlPath().'/service/IIIF/representation:'.$rep_id.'/info.json';
+		
+		$vtt_captions = null;
+		if(is_array($vtt_caption_list = $t_rep->getCaptionFileList($rep_id))) {
+			$vtt_captions = [];
+			foreach($vtt_caption_list as $vtt_caption) {
+				$vtt_captions[] = [
+					'url' => $vtt_caption['url'],
+					'locale' => $vtt_caption['locale'],
+					'language' => substr($vtt_caption['locale_code'], 0, 2),
+					'locale_code' => $vtt_caption['locale_code']
+				];
+			}
+		}
+		$rep = [
+			'representation_id' => $rep_id,
+			'mimetype' => $mimetype,
+			'media_class' => caGetMediaClass($qr->get('ca_object_representations.mimetype')),
+			'original_url' => $qr->get("ca_object_representations.media.original.url"),
+			'url' => $qr->get("ca_object_representations.media.{$display_version}.url"),
+			'original_tag' => $qr->get("ca_object_representations.media.original.tag"),
+			'icon_tag' => $qr->get("ca_object_representations.media.iconlarge.tag"),
+			'tag' => $qr->get("ca_object_representations.media.{$display_version}.tag"),
+			'iiifUrl' => $iiif_url,
+			'no_overlay' => (bool)($display_info['no_overlay'] ?? false),
+			'caption' => caProcessTemplateForIDs($caption_template, $qr->tableName(), [$rep_id]),
+			'vttCaptions' => $vtt_captions,
+			'download_version' => $allow_download ? caGetOption('download_version', $download_info, null) : null
+		];
+		
+		if(is_array($file_list = $qr->getFileList()) && sizeof($file_list)) {
+			$pages = array_map(function($v) {
+				return $v['preview_url'];
+			}, $file_list);	
+			$rep['pages_previews'] = array_values($pages);
+			
+			$rep['pages'] = [];
+			foreach($rep['pages_previews'] as $i => $p) {
+				$rep['pages'][] = $request->getBaseUrlPath().'/service/IIIF/representation:'.$rep_id.':'.($i+1).'/info.json';
+			}
+		}
+		
+		
+		$rep['display_class'] = $display_info['display_class'] ?? null;
+		
+		$opts = MediaViewerManager::viewerOptionsForDisplayClass($display_type, $display_info['display_class']);
+		$rep['options'] = $opts;
+		
+		$opts = MediaViewerManager::viewerOptionsForDisplayClass('overlay', $display_info['display_class']);
+		$rep['overlay_options'] = $opts;
+		
+		
+		if(is_array($versions)) {
+			foreach($versions as $version) {
+				$rep[$version] = $qr->get("ca_object_representations.media.{$version}.url");
+			}
+		}
+		
+		$reps[] = $rep;
+	}
+	return $reps;
+}
+# ------------------------------------------------------------------
+/**
  * Returns media presentation viewer HTML for one or more records. This is the entry point when rendering media
  * using per-mimetype settings in media_display.conf. Renders HTML using  views/bundles/representation_viewer_html.php.
  * This will render media viewers for many items. To render a viewer for a specific item see caGetMediaViewerHTML()
@@ -4516,7 +4773,7 @@ function caRepToolbar($po_request, $pt_representation, $pt_subject, $pa_options=
  *
  */
 function caGetAvailableDownloadVersions(RequestHTTP $request, ?string $mimetype, ?array $options=null) {
-	$download_display_info = caGetMediaDisplayInfo('download', $mimetype);
+	$download_display_info = caGetMediaDisplayInfoForMimetype('download', $mimetype);
 	
 	$download_version = caGetOption(['download_version', 'display_version'], $download_display_info);
 	$download_version_by_role = caGetOption('roles', $download_display_info);
@@ -4990,7 +5247,7 @@ function caRepresentationViewerHTMLBundles($po_request, $po_data, $pt_subject, $
 				['viewerWrapper' => 'viewerInline', 'context' => caGetOption('context', $pa_options, null), 'checkAccess' => caGetOption('checkAccess', $pa_options, null)]
 			).$vs_tool_bar.$vs_caption."</div></div>";
 
-			if (sizeof($va_reps) > 10) { break(2); }
+			//if (sizeof($va_reps) > 10) { break(2); }
 		}
 	}
 	return $va_reps;
@@ -5333,7 +5590,7 @@ function caProcessReferenceTags($request, $text, $options=null) {
 			}
 		}
 	}
-	$text = str_replace("<~root~>", "", str_replace("</~root~>","", $o_doc->html()));
+	$text = str_replace(array("<~root~>", "</~root~>"), "", $o_doc->html());
 	
 	if (sizeof($idnos)) {
 		foreach($idnos as $ref_type => $va_tags) {
@@ -5545,6 +5802,24 @@ function caFormatPersonName($fname, $lname, $default=null){
 }
 # ------------------------------------------------------------------
 /**
+ * Strip special characters for filename prior to download
+ *
+ * @param string $filename
+ * @param array $options No options are currently supported
+ *
+ * @return string 
+ * @throws ApplicationException
+ */
+function caEscapeFilenameForDownload(string $filename, ?array $options=null) : string {
+	$v = preg_replace("![\|;\<\>\(\)\$\`\~&\\\\]+!", "_", html_entity_decode($filename));
+	if(preg_match('^\.+$', $filename)) {
+		throw new ApplicationError(_t('Invalid filename'));
+	}
+	return $v;
+}
+
+# ------------------------------------------------------------------
+/**
  * Generate name for downloaded representation media file based upon app.conf 
  * downloaded_file_naming directive.
  *
@@ -5577,7 +5852,7 @@ function caGetRepresentationDownloadFileName(string $table, array $data, ?array 
 		case 'original_name':
 		default:
 			if (strpos($mode, "^") !== false) { // template
-			   $filename = preg_replace('!\.[A-Za-z]{1}[A-Za-z0-9]{1,3}$!', '', caProcessTemplateForIDs($mode, 'ca_object_representations', [$data['representation_id']]));
+			   $filename = caProcessTemplateForIDs($mode, 'ca_object_representations', [$data['representation_id']]);
 			   
 			} elseif ($data['original_filename']) {
 				$tmp = explode('.', $data['original_filename']);
@@ -5601,8 +5876,7 @@ function caGetRepresentationDownloadFileName(string $table, array $data, ?array 
 			break;
 	} 
 
-	$filename = html_entity_decode($filename);
-	return preg_replace("![^A-Za-z0-9_\-\.&]+!", "_", $filename);
+	return caEscapeFilenameForDownload($filename);
 }
 # ------------------------------------------------------------------
 /**
@@ -5635,9 +5909,7 @@ function caGetMediaDownloadArchiveName($table, $id, $options=null) {
 			}
 			break;
 	} 
-
-	$filename = html_entity_decode($filename);
-	return preg_replace("![^A-Za-z0-9_\-\.&]+!", "_", $filename);
+	return caEscapeFilenameForDownload($filename);
 }
 # ------------------------------------------------------------------
 /**
@@ -5889,7 +6161,7 @@ function caApplyFindViewUserRestrictions(ca_users $t_user, string $table, ?array
 	$allowed_views = $t_user->getPreference("find_{$table}_available_result_views");
 	
 	$type_id = caGetOption('type_id', $options, null);
-	if(is_array($allowed_views[$table][$type_id]) && sizeof($allowed_views[$table][$type_id])) {
+	if(is_array($allowed_views[$table][$type_id] ?? null) && sizeof($allowed_views[$table][$type_id])) {
 		foreach($views as $i => $v) {
 			if(!in_array($v, $allowed_views[$table][$type_id], true)) {
 				unset($views[$i]);
@@ -5922,3 +6194,131 @@ function caGetFindViewList($table_name_or_num) : ?array {
 	}	
 }
 # ------------------------------------------------------------------
+/**
+ *
+ */
+function caGetQuillToolbar(array $options=null) : ?array {
+	$config = Configuration::load();
+	
+	$map = [
+		'bold' => ['code' => 'bold'],
+		'italic' => ['code' => 'italic'],
+		'underline' => ['code' => 'underline'],
+		'strike' => ['code' => 'strike'],
+		'subscript' => ['code' => 'script', 'value' => 'sub'],
+		'superscript' => ['code' => 'script', 'value' => 'super'],
+		'header' => ['code' => 'header', 'value' => [false, 1, 2, 3, 4, 5, 6]],
+		
+		'clean' => ['code' => 'clean'],
+		'removeformat' => ['code' => 'clean'],	// synonym for "clean"
+		
+		//'font' => ['code' => 'font', 'value' => []],	// Doesn't actually set font - sets Quill-specific class so let's not offer this
+		//'fontsize' => ['code' => 'size', 'value' => []], / Doesn't actually set size - sets Quill-specific class so let's not offer this
+		'textcolor' => ['code' => 'color', 'value' => []],
+		//'background' => ['code' => 'background', 'value' => []], // Doesn't appear to render even thought Quill docs reference it
+		
+		'blockquote' => ['code' => 'blockquote'],
+		'code' => ['code' => 'code', 'class' => 'ql-code-block'],
+		'link' => ['code' => 'link'],
+		'image' => ['code' => 'image'],
+		'video' => ['code' => 'video'],
+		'formula' => ['code' => 'formula'],
+		'align' => ['code' => 'align', 'value' => []],
+		
+		'numberedlist' => ['code' => 'list', 'value' => 'ordered'],
+		'bulletedlist' => ['code' => 'list', 'value' => 'bullet'],
+		'checkList' => ['code' => 'list', 'value' => 'check'],
+		'outdent' => ['code' => 'indent', 'value' => '+1'],
+		'indent' => ['code' => 'indent', 'value' => '-1'],
+		
+		'direction' => ['code' => 'direction', 'value' => 'rtl'],
+		//'undo' => ['code' => 'undo'],	// Doesn't appear to render even thought Quill docs reference it
+		//'redo' => ['code' => 'redo'], // Doesn't appear to render even thought Quill docs reference it
+	];
+	
+	$toolbar = $config->get(strtolower((caGetOption('type', $options, 'editor') )!== 'content') ? 'wysiwyg_editor_toolbar' : 'wysiwyg_content_editor_toolbar');
+	if(!is_array($toolbar)) { return null; }
+		
+	$groups = [];
+	foreach($toolbar as $group_name => $list) {
+		$group = [];
+		foreach($list as $item) {
+			$item_case = strtolower($item);
+			if(isset($map[$item_case])) {
+				if(isset($map[$item_case]['value'])) {
+					$group[] = [$map[$item_case]['code'] => $map[$item_case]['value']];
+				} else {
+					$group[] = $map[$item_case]['code'];
+				}
+			}
+		}
+		$groups[] = $group;
+	}
+	
+	return $groups;
+}
+# ------------------------------------------------------------------
+/**
+ *
+ */
+function caGetCK5Toolbar(array $options=null) : ?array {
+	$config = Configuration::load();
+	
+	$map = [
+		'bold' => ['code' => 'bold'],
+		'italic' => ['code' => 'italic'],
+		'underline' => ['code' => 'underline'],
+		'strike' => ['code' => 'strikethrough'],
+		'subscript' => ['code' => 'subscript'],
+		'superscript' => ['code' => 'superscript'],
+		'code' => ['code' => 'code'],
+		'header' => ['code' => 'heading'],
+		
+		'clean' => ['code' => 'removeFormat'],
+		'removeformat' => ['code' => 'removeFormat'],	// synonym for "clean"
+		
+		'font' => ['code' => 'fontfamily'],	
+		'fontsize' => ['code' => 'fontsize'],
+		'textcolor' => ['code' => 'fontColor'],
+		'background' => ['code' => 'fontBackgroundColor'],
+		
+		'blockquote' => ['code' => 'blockQuote'],
+		'link' => ['code' => 'link'],
+		'image' => ['code' => 'linkImage'],
+		'video' => ['code' => 'mediaEmbed'],
+		'formula' => ['code' => 'formula'],
+		'align' => ['code' => 'alignment'],
+		
+		'numberedlist' => ['code' => 'numberedList'],
+		'bulletedlist' => ['code' => 'bulletedList'],
+		'checkList' => ['code' => 'todoList'],
+		'outdent' => ['code' => 'outdent'],
+		'indent' => ['code' => 'indent'],
+		'source' => ['code' => 'sourceEditing'],
+	
+		'undo' => ['code' => 'undo'],	
+		'redo' => ['code' => 'redo']
+	];
+	
+	$toolbar = $config->get(strtolower((caGetOption('type', $options, 'editor') )!== 'content') ? 'wysiwyg_editor_toolbar' : 'wysiwyg_content_editor_toolbar');
+	if(!is_array($toolbar)) { return null; }
+		
+	$groups = [];
+	foreach($toolbar as $group_name => $list) {
+		$group = [];
+		foreach($list as $item) {
+			$item_case = strtolower($item);
+			if(isset($map[$item_case])) {
+				if(isset($map[$item_case]['value'])) {
+					$group[] = [$map[$item_case]['code'] => $map[$item_case]['value']];
+				} else {
+					$group[] = $map[$item_case]['code'];
+				}
+			}
+		}
+		$groups = array_merge($groups, $group);
+	}
+	return $groups;
+}
+# ------------------------------------------------------------------
+
