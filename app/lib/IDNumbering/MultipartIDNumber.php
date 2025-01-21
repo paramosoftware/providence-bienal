@@ -157,7 +157,8 @@ class MultipartIDNumber extends IDNumber {
 		if ($separator && $this->formatHas('PARENT', 0)) {
 			// starts with PARENT element so explode in reverse since parent value may include separators
 			$v_proc = preg_replace("!^".preg_quote($this->getParentValue(), '!')."!", "_PARENT_", $value);
-			$element_vals = explode($separator, $v_proc);
+
+      $element_vals = explode($separator, $v_proc);
 
 			$i = 0;
 			foreach ($this->getElements() as $element_info) {
@@ -261,7 +262,12 @@ class MultipartIDNumber extends IDNumber {
 					if ($v) {
 						$allow_suffix = (bool)($info['allowsuffix'] ?? null);
 						$prefix = $info['prefix'] ?? '';
-						if (!preg_match($allow_suffix ? "/^{$prefix}([0-9]+[^0-9]+.*|[0-9]+)$/" : "/^{$prefix}[0-9]+$/", $v)) {
+
+						// Existem milhares de IDNOs de entidades e obras cujo comportamento agora é serial,
+						// mas originalmente eram livres, então eu não posso obrigar a validação apenas por números
+
+            //if (!preg_match($allow_suffix ? "/^{$prefix}([0-9]+[^0-9]+.*|[0-9]+)$/" : "/^{$prefix}[0-9]+$/", $v)) {
+						if (!preg_match("/^[-A-Za-z0-9]+$/", $v)) {
 							$element_errors[$ename] = _t("'%1' is not valid for %2; only numbers are allowed", $v, $info['description']);
 						}
 					}
@@ -393,6 +399,9 @@ class MultipartIDNumber extends IDNumber {
 		$field = Datamodel::getTableProperty($table, 'ID_NUMBERING_ID_FIELD');
 		if(!$field) { return 'ERR'; }
 		$sort_field = Datamodel::getTableProperty($table, 'ID_NUMBERING_SORT_FIELD');
+
+		$sort_field = 'idno_sort';
+
 		if (!$sort_field) { $sort_field = $field; }
 
 		$separator = $this->getSeparator();
@@ -565,7 +574,7 @@ class MultipartIDNumber extends IDNumber {
 		}
 		
 		$deleted_limit_sql = ($t_instance->hasField('deleted') ? " AND (deleted = 0)" : '');
-		
+
 		if ($qr_res = $this->db->query("
 			SELECT {$field} FROM {$table}
 			WHERE
@@ -619,7 +628,7 @@ class MultipartIDNumber extends IDNumber {
 			if (($zeropad_to_length = caGetOption('zeropad_to_length', $element_info, null, ['castTo' => 'int'])) > 0) {
 				$num = sprintf("%0{$zeropad_to_length}d", $num);
 			} 
-			
+
 			return ($element_info['prefix'] ?? '').$num;
 		} else {
 			return 'ERR'; 
@@ -1038,7 +1047,7 @@ class MultipartIDNumber extends IDNumber {
 		}
 		if ((sizeof($elements) < sizeof($element_values)) && (bool)$this->getFormatProperty('allow_extra_elements', array('default' => 1))) {
 			$extra_values = array_slice($element_values, sizeof($elements));
-			
+
 			if (($extra_size = (int)$this->getFormatProperty('extra_element_width', array('default' => 10))) < 1) {
 				$extra_size = 10;
 			}
@@ -1145,7 +1154,7 @@ class MultipartIDNumber extends IDNumber {
 
 		$i = 0;
 		$num_serial_elements_seen = 0;
-		
+
 		foreach ($elements as $element_info) {
 			switch($element_info['type']) {
 				case 'PARENT':
@@ -1322,7 +1331,7 @@ class MultipartIDNumber extends IDNumber {
 				}	
 			}
 		}
-		
+
 		return ($isset && $is_not_empty) ? $tmp : null;
 	}
 	# -------------------------------------------------------

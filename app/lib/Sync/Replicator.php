@@ -450,7 +450,7 @@ class Replicator {
 							$source_key, $target_key), Zend_Log::INFO);
 						break;
 					}
-					
+
                     $log_ids = array_keys($this->source_log_entries);
                     $start_log_id = $this->start_log_id = array_shift($log_ids);
                     $end_log_id = $this->end_log_id = array_pop($log_ids);
@@ -458,7 +458,7 @@ class Replicator {
                     
                     $this->logDebug(_t("[%1] Found %2 source log entries starting at [%4 - %5].", $this->source_key, sizeof($this->source_log_entries), $replicated_log_id, $start_log_id, $end_log_id), Zend_Log::DEBUG);
                     //$this->logDebug(_t("[%1] %2", $this->source_key, print_r($this->source_log_entries,true)), Zend_Log::DEBUG);
-                    
+
                     $filtered_log_entries = null;
 					if ($is_push_missing) {
 						// harvest guids used for updates
@@ -1145,9 +1145,9 @@ class Replicator {
 			$this->log(_t("There were errors getting locale list for target %1: %2.", $target_key, join('; ', $target_locales['errors'])), Zend_Log::ERR);
 			return false;
 		}
-		if(!sizeof(array_intersect($source_locales, $target_locales))) {
+		if(sizeof($source_locales) && sizeof($target_locales) && !sizeof(array_intersect($source_locales, $target_locales))) {
 			$this->log(_t("Locales appear to be mis-aligned for source %1 and target %2. Skipping target.",
-				$source_key, $target_key), Zend_Log::WARN);
+				serialize($source_locales), serialize($target_locales)), Zend_Log::WARN);
 			return false;
 		}
 		return true;

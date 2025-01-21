@@ -232,3 +232,91 @@
 print "</table></div>\n";
 
 ?>
+
+<script>
+
+	$("#ca_occurrence_labels_name").autocomplete({
+		source: function( $request, $response ) {
+			$.ajax( {
+				url: "/ca2/service.php/Find/ca_occurrences?q=ca_occurrences.preferred_labels.name:" + $request.term + "&limit=10",
+				success: function( $data ) {
+					
+					var r = [];
+					for ( var i in $data["results"] ) {
+						r.push({
+							id:"id_" + $data["results"][i]["id"],
+							label:$data["results"][i]["display_label"],
+							value:$data["results"][i]["display_label"]
+						});
+					}
+					$response( r );
+				}
+			});
+		},
+		open: function( $event , $ui ) {
+			//
+		},
+		minLength: 3,
+		select: function( $event, $ui ) {					
+			$event.preventDefault();
+			$("#ca_occurrence_labels_name").val( $ui.item.value );
+		}
+	});
+		
+	$("#ca_entity_labels_displayname").autocomplete({
+		source: function( $request, $response ) {
+			$.ajax( {
+				url: "/ca2/service.php/Find/ca_entities?q=ca_entities.preferred_labels.displayname:" + $request.term + "&limit=10",
+				success: function( $data ) {
+					
+					var r = [];
+					for ( var i in $data["results"] ) {
+						r.push({
+							id:"id_" + $data["results"][i]["id"],
+							label:$data["results"][i]["display_label"],
+							value:$data["results"][i]["display_label"]
+						});
+					}
+					$response( r );
+				}
+			});
+		},
+		open: function( $event , $ui ) {
+			//
+		},
+		minLength: 3,
+		select: function( $event, $ui ) {					
+			$event.preventDefault();
+			$("#ca_entity_labels_displayname").val( $ui.item.value );
+		}
+	});
+	
+	$("#ca_place_labels_name").autocomplete({
+		source: function( $request, $response ) {
+			$.ajax( {
+				url: "/ca2/service.php/Find/ca_places?q=ca_places.preferred_labels.name:" + $request.term + "&limit=10",
+				success: function( $data ) {
+					
+					var r = [];
+					for ( var i in $data["results"] ) {
+						r.push({
+							id:"id_" + $data["results"][i]["id"],
+							label:$data["results"][i]["display_label"],
+							value:$data["results"][i]["display_label"]
+						});
+					}
+					$response( r );
+				}
+			});
+		},
+		open: function( $event , $ui ) {
+			//
+		},
+		minLength: 3,
+		select: function( $event, $ui ) {					
+			$event.preventDefault();
+			$("#ca_place_labels_name").val( $ui.item.value );
+		}
+	});
+
+</script>
