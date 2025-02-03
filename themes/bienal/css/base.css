@@ -7573,3 +7573,8 @@ p.abbreviatedPath, div.abbreviatedPath, span.abbreviatedPath {
     border-radius: 3px;
     white-space: nowrap;
 }
+
+.ui-state-active a, .ui-state-active a:link, .ui-state-active a:visited {
+    color: #212121 !important; 
+    text-decoration: none;
+}
