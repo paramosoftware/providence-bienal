@@ -1036,9 +1036,17 @@ li.sfHover > a > .sf-sub-indicator {
 	background-color: #eee !important;
 	background-image:none !important;
 }
-.ui-state-active, .ui-widget-content .ui-state-active, .ui-widget-header .ui-state-active {
+.ui-state-active, .ui-widget-content .ui-state-active {
+	background-color: #eee !important;
+	background-image: none !important;
+    color: #333333 !important;
+}
+.ui-widget-header .ui-state-active {
 	background-color: #fff !important;
 	background-image:none !important;
+}
+.ui-state-active a, .ui-state-active a:link, .ui-state-active a:visited {
+    color: #212121 !important;
 }
 .ui-widget-content {
 	border-top: 1px solid #eee !important;
@@ -1053,10 +1061,19 @@ li.sfHover > a > .sf-sub-indicator {
 	border-left:1px solid #ccc !important;
 	margin-top:2px;
 }
+li.ui-menu-item {
+    padding: 3px;
+}
+li.ui-menu-item:hover {
+    background-color:#eee;
+}
 .ui-menu-item a:hover {
 	background-image:none;
 	background-color:#eee;
 	border: 1px solid #ddd;
+}
+.ui-menu-item-wrapper {
+    text-decoration: none !important;
 }
 .hierarchyBrowseTab {
 	border-top: 0px !important;
@@ -7572,9 +7589,4 @@ p.abbreviatedPath, div.abbreviatedPath, span.abbreviatedPath {
     background-color: #f8f8f8;
     border-radius: 3px;
     white-space: nowrap;
-}
-
-.ui-state-active a, .ui-state-active a:link, .ui-state-active a:visited {
-    color: #212121 !important; 
-    text-decoration: none;
 }
