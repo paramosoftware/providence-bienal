@@ -807,7 +807,16 @@ class ca_data_importer_items extends BaseModel {
 			'width' => 40, 'height' => 2,
 			'takesLocale' => false,
 			'default' => false,
-			'label' => _t('Do not parse entity values for entity preferred labels.'),
+			'label' => _t('Do not parse entity values for entity preferred labels.')
+		);
+		$settings['allowIdnoReplacement'] = array(
+			'formatType' => FT_TEXT,
+			'displayType' => DT_FIELD,
+			'width' => 40, 'height' => 2,
+			'takesLocale' => false,
+			'default' => 0,
+			'label' => _t('Allow replacement of existing idno values'),
+			'description' => _t('When set mappings to idno on existing records with idno values are applied. The default is to not apply idno mappings to existing records when an idno value already exists.')
 		);
 		$settings['parseDateSuffix'] = array(
 			'formatType' => FT_TEXT,
