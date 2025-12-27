@@ -2287,7 +2287,6 @@ class WLPlugSearchEngineSqlSearch2 extends BaseSearchPlugin implements IWLPlugSe
 				AND
 				({$where_sql})
 		";
-		print $sql; print_R($params);
 		return ['sql' => $sql, 'params' => $params];
 	}
 	# -------------------------------------------------------
