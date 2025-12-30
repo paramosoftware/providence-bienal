@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2020-2023 Whirl-i-Gig
+ * Copyright 2020-2025 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -47,7 +47,9 @@ class YouTubeDL Extends BaseMediaUrlPlugin {
 		'.youtube\.com$' => ['name' => 'YouTube', 'format' => 'mp4'],
 		'youtu\.be$'  => ['name' => 'YouTube', 'format' => 'mp4'],
 		'soundcloud\.com$' => ['name' => 'Soundcloud', 'format' => 'mp3'],
-		'vimeo\.com$' => ['name' => 'Vimeo', 'format' => 'http-720p']
+		'vimeo\.com$' => ['name' => 'Vimeo', 'format' => 'http-720p'],
+		'facebook\.com$' => ['name' => 'Facebook', 'format' => 'mp4'],
+		'instagram\.com$' => ['name' => 'Instagram', 'format' => 'mp4'],
 	];
 	
 	# ------------------------------------------------
