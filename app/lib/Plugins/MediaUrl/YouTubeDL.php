@@ -49,7 +49,7 @@ class YouTubeDL Extends BaseMediaUrlPlugin {
 		'soundcloud\.com$' => ['name' => 'Soundcloud', 'format' => 'mp3'],
 		'vimeo\.com$' => ['name' => 'Vimeo', 'format' => 'http-720p'],
 		'facebook\.com$' => ['name' => 'Facebook', 'format' => 'mp4'],
-		'instagram\.com$' => ['name' => 'Instagram', 'format' => 'mp4'],
+		'instagram\.com$' => ['name' => 'Instagram', 'format' => 'mp4']
 	];
 	
 	# ------------------------------------------------
@@ -87,7 +87,7 @@ class YouTubeDL Extends BaseMediaUrlPlugin {
 	 *
 	 * @return bool|array False if url is not valid, array with information about the url if valid.
 	 */
-	public function parse(string $url, array $options=null) {
+	public function parse(string $url, ?array $options=null) {
 		if (!is_array($parsed_url = parse_url(urldecode($url)))) { return null; }
 		
 		// Is it a supported URL?
@@ -116,12 +116,16 @@ class YouTubeDL Extends BaseMediaUrlPlugin {
 	 *		filename = File name to use for fetched file. If omitted a random name is generated. [Default is null]
 	 *		extension = Extension to use for fetched file. If omitted ".bin" is used as the extension. [Default is null]
 	 *		returnAsString = Return fetched content as string rather than in a file. [Default is false]
+	 *		dontDownload = Skip download and return file information only. [Default is false]
 	 *
 	 * @throws UrlFetchException Thrown if fetch URL fails.
 	 * @return bool|array|string False if url is not valid, array with path to file with content and format if successful, string with content if returnAsString option is set.
 	 */
-	public function fetch(string $url, array $options=null) {
+	public function fetch(string $url, ?array $options=null) {
 		if ($p = $this->parse($url, $options)) {
+			if(caGetOption(['dont_download', 'dontDownload'], $options, false)) { 
+				return array_merge($p, ['file' => null]);
+			}
 			if($dest = caGetOption('filename', $options, null)) {
 				$dest .= '.'.caGetOption('extension', $options, '.bin');
 			}

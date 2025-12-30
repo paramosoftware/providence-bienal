@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2020 Whirl-i-Gig
+ * Copyright 2020-2025 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -48,7 +48,7 @@ class MediaUrl extends \CA\Plugins\PluginConsumer {
 	/**
 	 *
 	 */
-	public function __construct($no_cache=false) { 
+	public function __construct(?bool $no_cache=false) { 
 		if (!self::$plugin_path) { self::$plugin_path = __CA_LIB_DIR__.'/Plugins/MediaUrl'; }
 		self::$exclusion_list = ['BaseMediaUrlPlugin.php'];
 		
@@ -67,7 +67,7 @@ class MediaUrl extends \CA\Plugins\PluginConsumer {
 	 *
 	 * @return array|bool False if no plugin can process the url, or an array of information about the URL on success.
 	 */
-	function validate($url, $options=null) {
+	function validate(string $url, ?array $options=null) {
 		$plugin_names = $this->getPluginNames($options);
 		foreach ($plugin_names as $plugin_name) {
 			if (!($plugin_info = $this->getPlugin($plugin_name))) { continue; }
@@ -89,13 +89,29 @@ class MediaUrl extends \CA\Plugins\PluginConsumer {
 	 *
 	 * @return bool|array|string False is no plugin can process the url, an array of data including the path to a file  containing the URL contents on success, or a string with file content is the returnAsString option is set.
 	 */
-	function fetch($url, $options=null) {
+	function fetch(string $url, ?array $options=null) {
+		$config = \Configuration::load()->getAssoc('allow_fetching_of_media_using_plugins');
+		foreach($config as $k => $v) {
+			$config[strtolower($k)] = $v;
+		}
 		$plugin_names = $this->getPluginNames();
 		foreach ($plugin_names as $plugin_name) {
 			if (!($plugin_info = $this->getPlugin($plugin_name))) { continue; }
 			
+			$plugin_name_lc = strtolower($plugin_name);
+			if(isset($config[$plugin_name_lc]) && is_array($config[$plugin_name_lc])) {
+				$pconfig = $config[$plugin_name_lc];
+			} elseif(isset($config['*']) && is_array($config['*'])) {
+				$pconfig = $config['*'];
+			} else {
+				$pconfig = ['enabled' => 1];
+			}
+			
+			if(!($pconfig['enabled'] ?? true)) { 
+				continue; 
+			}
 			try {
-				if ($f = $plugin_info['INSTANCE']->fetch($url, $options)) {
+				if ($f = $plugin_info['INSTANCE']->fetch($url, array_merge($options ?? [], $pconfig))) {
 					return $f;
 				}
 			} catch (\UrlFetchException $e) {

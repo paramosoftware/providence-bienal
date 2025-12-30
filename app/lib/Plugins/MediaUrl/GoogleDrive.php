@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2020 Whirl-i-Gig
+ * Copyright 2020-2025 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -82,7 +82,7 @@ class GoogleDrive Extends BaseMediaUrlPlugin {
 	 *
 	 * @return bool|array False if url is not valid, array with information about the url if valid.
 	 */
-	public function parse(string $url, array $options=null) {
+	public function parse(string $url, ?array $options=null) {
 		if (!is_array($parsed_url = parse_url(urldecode($url)))) { return null; }
  		
  		$format = caGetOption('format', $options, null, ['validValues' => [null, 'pdf', 'xlsx', 'docx']]);
@@ -129,12 +129,17 @@ class GoogleDrive Extends BaseMediaUrlPlugin {
 	 *		extension = Extension to use for fetched file. If omitted ".bin" is used as the extension. [Default is null]
 	 *		format = Preferred format to grab GoogleDrive resource in, if possible. May be ignored is format is not possible for resource. Valid values are pdf, xlsx, docx. [Default is pdf]
 	 *		returnAsString = Return fetched content as string rather than in a file. [Default is false]
+	 *		dontDownload = Skip download and return file information only. [Default is false]
 	 *
 	 * @throws UrlFetchException Thrown if fetch URL fails.
 	 * @return bool|array|string False if url is not valid, array with path to file with content and format if successful, string with content if returnAsString option is set.
 	 */
-	public function fetch(string $url, array $options=null) {
+	public function fetch(string $url, ?array $options=null) {
 		if ($p = $this->parse($url, $options)) {
+			if(caGetOption(['dont_download', 'dontDownload'], $options, false)) { 
+				return array_merge($p, ['file' => null]);
+			}
+			
  			$format = $p['format']; //caGetOption('format', $options, null, ['validValues' => [null, 'pdf', 'xlsx', 'docx']]);
 			if($dest = caGetOption('filename', $options, null)) {
 				$dest .= '.'.caGetOption('extension', $options, '.bin');

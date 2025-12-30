@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2020 Whirl-i-Gig
+ * Copyright 2020-2025 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -72,7 +72,7 @@ class _File Extends BaseMediaUrlPlugin {
 	 *
 	 * @return bool|array False if url is not valid, array with information about the url if valid.
 	 */
-	public function parse(string $url, array $options=null) {
+	public function parse(string $url, ?array $options=null) {
 		if (!isUrl($url)) { return false; }
 		return ['url' => $url, 'originalUrl' => $url, 'format' => pathinfo($url, PATHINFO_EXTENSION), 'plugin' => 'File', 'originalFilename' => pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_BASENAME)];
 	}
@@ -89,7 +89,7 @@ class _File Extends BaseMediaUrlPlugin {
 	 * @throws UrlFetchException Thrown if fetch URL fails.
 	 * @return bool|array|string False if url is not valid, array with path to file with content and format if successful, string with content if returnAsString option is set.
 	 */
-	public function fetch(string $url, array $options=null) {
+	public function fetch(string $url, ?array $options=null) {
 		if ($p = $this->parse($url, $options)) {
  			if($dest = caGetOption('filename', $options, null)) {
 				$dest .= '.'.caGetOption('extension', $options, '.bin');

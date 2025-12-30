@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2023 Whirl-i-Gig
+ * Copyright 2023-2025 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -66,7 +66,7 @@ class Elevator Extends BaseMediaUrlPlugin {
 	 *
 	 * @return bool|array False if url is not valid, array with information about the url if valid.
 	 */
-	public function parse(string $url, array $options=null) {
+	public function parse(string $url, ?array $options=null) {
 		if(!defined('__ELEVATOR_API_URL__') || !__ELEVATOR_API_URL__) { return null; }
 		if(!defined('__ELEVATOR_KEY__')) { return null; }
 		if(!defined('__ELEVATOR_SECRET__')) { return null; }
@@ -101,16 +101,20 @@ class Elevator Extends BaseMediaUrlPlugin {
 	 *		filename = File name to use for fetched file. If omitted a random name is generated. [Default is null]
 	 *		extension = Extension to use for fetched file. If omitted ".bin" is used as the extension. [Default is null]
 	 *		returnAsString = Return fetched content as string rather than in a file. [Default is false]
+	 *		dontDownload = Skip download and return file information only. [Default is false]
 	 *
 	 * @throws UrlFetchException Thrown if fetch URL fails.
 	 * @return bool|array|string False if url is not valid, array with path to file with content and format if successful, string with content if returnAsString option is set.
 	 */
-	public function fetch(string $url, array $options=null) {
+	public function fetch(string $url, ?array $options=null) {
 		if ($p = $this->parse($url, $options)) {
 			if($dest = caGetOption('filename', $options, null)) {
 				$dest .= '.'.caGetOption('extension', $options, '.bin');
 			}
 			
+			if(caGetOption(['dont_download', 'dontDownload'], $options, false)) { 
+				return array_merge($p, ['file' => null]);
+			}
 			$tmp_file = caFetchFileFromUrl($p['url'], $dest);
 			
 			if (caGetOption('returnAsString', $options, false)) {
