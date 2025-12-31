@@ -67,7 +67,7 @@ class MediaUrl extends \CA\Plugins\PluginConsumer {
 	 *
 	 * @return array|bool False if no plugin can process the url, or an array of information about the URL on success.
 	 */
-	function validate(string $url, ?array $options=null) {
+	public function validate(string $url, ?array $options=null) {
 		$plugin_names = $this->getPluginNames($options);
 		foreach ($plugin_names as $plugin_name) {
 			if (!($plugin_info = $this->getPlugin($plugin_name))) { continue; }
@@ -89,12 +89,77 @@ class MediaUrl extends \CA\Plugins\PluginConsumer {
 	 *
 	 * @return bool|array|string False is no plugin can process the url, an array of data including the path to a file  containing the URL contents on success, or a string with file content is the returnAsString option is set.
 	 */
-	function fetch(string $url, ?array $options=null) {
+	public function fetch(string $url, ?array $options=null) {
+		$active = $this->_getActivePlugins();
+		foreach($active as $p) {
+			try {
+				if ($f = $p['plugin']->fetch($url, array_merge($options ?? [], $p['config']))) {
+					return $f;
+				}
+			} catch (\UrlFetchException $e) {
+				return false;
+			}
+		}
+		return false;
+	}
+	# ----------------------------------------------------------
+	/**
+	 * Fetch preview image for URL
+	 *
+	 * @param string $url
+	 * @param array $options Options include:
+	 *		format = Suggest preferred format to plugins that can return different formats for the same resource (Eg. GoogleDrive). The format is only a preference and may be ignored. [Default is NULL]
+	 *		limit = Limit processing to a specific plugin or list of plugins. Note that the name of the default file URL handler is "_File". [Default is null; all plugins are used]
+	 *		returnAsString = Return fetched content as string rather than in a file. [Default is false]
+	 *
+	 * @return bool|array|string False is no plugin can process the url, an array of data including the path to a file  containing the URL contents on success, or a string with file content is the returnAsString option is set.
+	 */
+	public function fetchPreview(string $url, ?array $options=null) {
+		$active = $this->_getActivePlugins();
+		foreach($active as $p) {
+			try {
+				if ($f = $p['plugin']->fetchPreview($url, array_merge($options ?? [], $p['config']))) {
+					return $f;
+				}
+			} catch (\UrlFetchException $e) {
+				return false;
+			}
+		}
+		return false;
+	}
+	# ----------------------------------------------------------
+	/**
+	 * Get service-specific HTML embedding tag for media
+	 *
+	 * @param string $url
+	 * @param array $options Options include:
+	 *		width = Width to apply to embedded content. [Default is 100% width]
+	 *		height = Height to use for embedded content. [Default is 100% height]
+	 *		title = Title to apply to embedded content. [Default is null]
+	 *
+	 * @return string HTML embed tag, or null if embedding is not possible
+	 */
+	public function embedTag(string $url, ?array $options=null) : ?string {
+		$active = $this->_getActivePlugins();
+		foreach($active as $p) {
+			if ($f = $p['plugin']->embedTag($url, array_merge($options ?? [], $p['config']))) {
+				return $f;
+			}
+		}
+		return null;
+	}
+	# ------------------------------------------------
+	/**
+	 *
+	 */
+	private function _getActivePlugins() : array {
 		$config = \Configuration::load()->getAssoc('allow_fetching_of_media_using_plugins');
 		foreach($config as $k => $v) {
 			$config[strtolower($k)] = $v;
 		}
 		$plugin_names = $this->getPluginNames();
+		
+		$active = [];
 		foreach ($plugin_names as $plugin_name) {
 			if (!($plugin_info = $this->getPlugin($plugin_name))) { continue; }
 			
@@ -110,15 +175,9 @@ class MediaUrl extends \CA\Plugins\PluginConsumer {
 			if(!($pconfig['enabled'] ?? true)) { 
 				continue; 
 			}
-			try {
-				if ($f = $plugin_info['INSTANCE']->fetch($url, array_merge($options ?? [], $pconfig))) {
-					return $f;
-				}
-			} catch (\UrlFetchException $e) {
-				return false;
-			}
+			$active[] = ['plugin' => $plugin_info['INSTANCE'], 'config' => $pconfig];
 		}
-		return false;
+		return $active;
 	}
 	# ------------------------------------------------
 }

@@ -181,6 +181,7 @@ class RepresentableBaseModel extends BundlableLabelableBaseModelWithAttributes {
 					$va_tmp['fetched_on'] = (int)$va_info['INPUT']['FETCHED_ON'];
 					$va_tmp['fetched_by'] = $va_info['INPUT']['FETCHED_BY'];
 				}
+				$va_tmp['is_embedded'] = $va_info['INPUT']['IS_EMBEDDED'] ?? 0;
 		
 				$va_tmp['num_multifiles'] = $t_rep->numFiles($vn_rep_id);
 				$va_tmp['num_transcriptions'] = $t_rep->numTranscriptions($vn_rep_id);
@@ -1460,6 +1461,7 @@ class RepresentableBaseModel extends BundlableLabelableBaseModelWithAttributes {
 						'num_transcriptions' => $va_rep['num_transcriptions'] ?? null,
 						'is_primary' => $is_primary = (int)($va_rep['is_primary'] ?? null),
 						'is_primary_display' => ($is_primary == 1) ? _t('PRIMARY') : '', 
+						'is_embedded' => $va_rep['is_embedded'] ?? 0,
 						'locale_id' => $va_rep['locale_id'] ?? null, 
 						'icon' => isset($va_rep['tags']['thumbnail']) ? $va_rep['tags']['thumbnail'] : null, 
 						'mimetype' => $va_rep['info']['original']['PROPERTIES']['mimetype'] ?? null, 

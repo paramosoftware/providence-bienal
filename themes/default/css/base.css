@@ -7652,6 +7652,7 @@ a.currentSet {
 
 div.objectRepresentationListImage {
     width: 120px;
+    text-align: center;
 }
 
 div.objectRepresentationListImageContainer {

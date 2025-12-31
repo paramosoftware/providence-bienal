@@ -4491,6 +4491,7 @@ if ((!isset($pa_options['dontSetHierarchicalIndexing']) || !$pa_options['dontSet
 				$vs_url = $this->_SET_FILES[$ps_field]['tmp_name'];
 				$vs_url_fetched_original_url = $vs_url_fetched_from = $vn_url_fetched_on = $vs_url_fetched_by = null;
 				
+				$is_without_media = $is_embed = false;
 				if(
 					$vb_allow_fetching_of_urls && 
 					isUrl($vs_url) &&
@@ -4504,6 +4505,11 @@ if ((!isset($pa_options['dontSetHierarchicalIndexing']) || !$pa_options['dontSet
 								$this->_SET_FILES[$ps_field]['original_filename'] = !empty($r['originalFilename']) ? $r['originalFilename'] : pathinfo($r['file'], PATHINFO_BASENAME);
 							}
 							$vs_tmp_file = $r['file'];
+							$is_without_media = true;
+							if((!$vs_tmp_file) && isset($r['previewPath'])) {
+								$vs_tmp_file = $this->_SET_FILES[$ps_field]['embed_preview'] = $r['previewPath'];
+								$is_embed = true;
+							}
 						} else {
 							$this->postError(1600, _t('Could not download media'), "BaseModel->_processMedia()", $this->tableName().'.'.$ps_field);	
 							return false;
@@ -4548,7 +4554,14 @@ if ((!isset($pa_options['dontSetHierarchicalIndexing']) || !$pa_options['dontSet
 					}
 				}
 			
-				if (isset($this->_SET_FILES[$ps_field]['tmp_name']) && (file_exists($this->_SET_FILES[$ps_field]['tmp_name']))) {
+				if (
+					(isset($this->_SET_FILES[$ps_field]['tmp_name']) && (file_exists($this->_SET_FILES[$ps_field]['tmp_name'])))
+					||
+					($is_embed)
+				) {
+					if($is_embed) {
+						$this->_SET_FILES[$ps_field]['tmp_name'] = $this->_SET_FILES[$ps_field]['embed_preview'];
+					}
 					if (!isset($pa_options['dont_allow_duplicate_media'])) {
 						$pa_options['dont_allow_duplicate_media'] = (bool)$this->getAppConfig()->get('dont_allow_duplicate_media');
 					}
@@ -5237,26 +5250,33 @@ if ((!isset($pa_options['dontSetHierarchicalIndexing']) || !$pa_options['dontSet
 					$this->_FILES[$ps_field] = $this->_FIELD_VALUES[$ps_field];
 					$vs_sql =  "{$ps_field} = ".$this->quote(caSerializeForDatabase($this->_FILES[$ps_field], true)).",";
 				} else {
-					$media_desc = [
+					$is_without_media = true;
+				}
+				
+				if($is_without_media || $is_embed) {
+					// Media-less representations
+					if(!is_array($media_desc)) { $media_desc = []; }
+					$media_desc = array_merge($media_desc, [
 						"ORIGINAL_FILENAME" => $this->_SET_FILES[$ps_field]['original_filename'],
 						"_CENTER" => [],
 						"_SCALE" => [],
 						"_SCALE_UNITS" => [],
 						"_START_AT_TIME" => null,
 						"_START_AT_PAGE" => null,
+						"IS_EMBEDDED" => $is_embed ? 1 : 0,
 						"INPUT" => [
-							"MIMETYPE" => $m->get("mimetype"),
-							"WIDTH" => $m->get("width"),
-							"HEIGHT" => $m->get("height"),
+							"MIMETYPE" => $is_embed ? null : $m->get("mimetype"),
+							"WIDTH" => $is_embed ? null : $m->get("width"),
+							"HEIGHT" => $is_embed ? null : $m->get("height"),
 							"MD5" => null,
 							"FILESIZE" => null,
 							"FETCHED_BY" => $vs_url_fetched_by,
 							"FETCHED_ORIGINAL_URL" => $vs_url_fetched_original_url,
 							"FETCHED_FROM" => $vs_url_fetched_from,
 							"FETCHED_ON" => $vn_url_fetched_on,
-							"FILE_LAST_MODIFIED" => filemtime($this->_SET_FILES[$ps_field]['tmp_name'])
+							"FILE_LAST_MODIFIED" => $is_embed ? null : filemtime($this->_SET_FILES[$ps_field]['tmp_name'])
 						 ]
-					];
+					]);
 					$this->_FILES[$ps_field] = $this->_FIELD_VALUES[$ps_field] = $media_desc;
 					$vs_sql =  "{$ps_field} = ".$this->quote(caSerializeForDatabase($this->_FILES[$ps_field], true)).",";
 				}

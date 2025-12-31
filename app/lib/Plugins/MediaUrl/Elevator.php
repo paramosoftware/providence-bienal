@@ -130,6 +130,37 @@ class Elevator Extends BaseMediaUrlPlugin {
 		return false;
 	}
 	# ------------------------------------------------
+	/**
+	 * Attempt to fetch preview from a URL, transforming content to specified format for source.
+	 *
+	 * @param string $url
+	 * @param array $options Options include:
+	 *		filename = File name to use for fetched file. If omitted a random name is generated. [Default is null]
+	 *		extension = Extension to use for fetched file. If omitted ".bin" is used as the extension. [Default is null]
+	 *		returnAsString = Return fetched content as string rather than in a file. [Default is false]
+	 *
+	 * @throws UrlFetchException Thrown if fetch URL fails.
+	 * @return bool|array|string False if url is not valid, array with path to file with content and format if successful, string with content if returnAsString option is set.
+	 */
+	public function fetchPreview(string $url, ?array $options=null) {
+		return false;
+	}
+	# ------------------------------------------------
+	/**
+	 * Get service-specific HTML embedding tag for media
+	 *
+	 * @param string $url
+	 * @param array $options Options include:
+	 *		width = Width to apply to embedded content. [Default is 100% width]
+	 *		height = Height to use for embedded content. [Default is 100% height]
+	 *		title = Title to apply to embedded content. [Default is null]
+	 *
+	 * @return string HTML embed tag, or null if embedding is not possible
+	 */
+	public function embedTag(string $url, ?array $options=null) : ?string {		
+		return null;
+	}
+	# ------------------------------------------------
 }
 
 /**
