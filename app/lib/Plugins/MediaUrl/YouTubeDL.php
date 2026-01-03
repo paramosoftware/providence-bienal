@@ -272,7 +272,7 @@ class YouTubeDL Extends BaseMediaUrlPlugin {
 					$tag = "<iframe src=\"https://www.youtube.com/embed/{$code}\" width=\"{$width}\" height=\"{$height}\" title=\"{$title}\" frameborder=\"0\" allowfullscreen referrerpolicy=\"strict-origin-when-cross-origin\"></iframe>";
 					break;
 				case 'Vimeo':
-					$tag = "<div style=\"padding-bottom: 75%; position: relative;\"><iframe width=\"{$width}\" height=\"{$height}\" title=\"{$title}\" src=\"https://player.vimeo.com/video/{$code}\" frameborder=\"0\" allow=\"accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen\"  style=\"position: absolute; top: 0px; left: 0px;\"></iframe></div>";
+					$tag = "<iframe width=\"{$width}\" height=\"{$height}\" title=\"{$title}\" src=\"https://player.vimeo.com/video/{$code}\" frameborder=\"0\" allow=\"accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture; fullscreen\"  style=\"position: absolute; top: 0px; left: 0px;\"></iframe>";
 					break;
 				case 'Soundcloud':
 					$tag = "<iframe width='{$width}' height='{$height}' scrolling='no' frameborder='no' allow='autoplay' src='https://w.soundcloud.com/player/?url=".urlencode($url)."'></iframe>";
@@ -289,6 +289,69 @@ class YouTubeDL Extends BaseMediaUrlPlugin {
 					break;
 			}
 			return $tag;
+		}
+		return null;
+	}
+	# ------------------------------------------------
+	/**
+	 * Get icon for media
+	 *
+	 * @param string $url
+	 * @param array $options Options include:
+	 *		size = size of icon, including units (Eg. 64px). [Default is null]
+	 *
+	 * @return string HTML icon or null if no icon was found
+	 */
+	public function icon(string $url, ?array $options=null) : ?string {
+		if ($p = $this->parse($url, $options)) {
+			$service = $p['service'];
+			
+			if(!is_null($tag = $this->getConfiguredIcon('YouTubeDL', $service, $options))) {
+				return $tag;
+			}
+			
+			$size = caGetOption('size', $options, null);
+			$size_css = $size ? "style='font-size: {$size}'" : '';
+			
+			
+			$tag = null;
+			switch($service) {
+				case 'YouTube':
+					$tag = '<i class="fab fa-youtube" {$size_css}></i>';
+					break;
+				case 'Vimeo':
+					$tag = '<i class="fab fa-vimeo-v" {$size_css}></i>';
+					break;
+				case 'Soundcloud':
+					$tag = '<i class="fab fa-soundcloud" {$size_css}></i>';
+					break;
+				case 'Facebook':
+					$tag = '<i class="fab fa-facebook" {$size_css}></i>';
+					break;
+				case 'Instagram':
+					$tag = '<i class="fab fa-instagram" {$size_css}></i>';
+					break;
+				default:
+					// noop
+					break;
+			}
+			return $tag;
+		}
+		return null;
+	}
+	# ------------------------------------------------
+	/**
+	 * Get name of service used to fetch media
+	 *
+	 * @param string $url
+	 * @param array $options Options include:
+	 *		format = Format of name. Valid values are "full", "short". [Default is full]
+	 *
+	 * @return string Service name or null if not service name is available.
+	 */
+	public function service(string $url, ?array $options=null) : ?string {
+		if ($p = $this->parse($url, $options)) {
+			return $p['service'];
 		}
 		return null;
 	}
