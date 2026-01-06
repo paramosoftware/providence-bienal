@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2015-2024 Whirl-i-Gig
+ * Copyright 2015-2026 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -475,6 +475,8 @@ abstract class BaseGettyLODServicePlugin extends BaseInformationServicePlugin {
 		 * "Coney Island" you get all kinds of Islands, just not the one you're looking for. It's in there somewhere but
 		 * the order field might prevent it from showing up within the limit. So we do our own little piece of "query rewriting" here.
 		 */
+		 
+		$ps_search = strip_tags($ps_search);	// HTML tags do funny things to Getty lookups
 		if ( is_numeric( $ps_search ) ) {
 			$vs_search = $ps_search;
 		} elseif ( isURL( $ps_search ) ) {
