@@ -1228,7 +1228,7 @@ class WLPlugSearchEngineSqlSearch2 extends BaseSearchPlugin implements IWLPlugSe
 		if (!is_array($options)) { $options = []; }
 		
 		$fi = $this->indexing_field_index;
-		if($this->indexing_field_index < 255) { $this->indexing_field_index++; }
+		if($this->indexing_field_index < 255 && !caGetOption('dontIncrementFieldIndex', $options, false)) { $this->indexing_field_index++; }
 		
 		if (!is_array($content)) {
 			$content = [$content];
