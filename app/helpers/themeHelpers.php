@@ -1875,7 +1875,6 @@ function caGetAnalyticsIntegrationValueList() : array {
  */
 function caGetAnalyticsIntegrationValues() : array {
 	if(CompositeCache::contains('pawtucket_analytics')) {
-		print "cached!";
 		return CompositeCache::fetch('pawtucket_analytics');
 	}
 	$o_appvars = new ApplicationVars();
