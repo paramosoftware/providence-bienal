@@ -278,7 +278,7 @@ class BundlableLabelableBaseModelWithAttributes extends LabelableBaseModelWithAt
 		// Set ACL for newly created record
 		if (caACLIsEnabled($this)) {
 			if($AUTH_CURRENT_USER_ID) { $this->setACLUsers([$AUTH_CURRENT_USER_ID => __CA_ACL_EDIT_DELETE_ACCESS__]); }
-			$this->setACLWorldAccess($this->getAppConfig()->get('default_item_access_level'));
+			$this->setACLWorldAccess($this->getAppConfig()->get('default_item_access_level') ?? __CA_ACL_NO_ACCESS__);
 		}
 		
 		if ($we_set_change_log_unit_id) { BaseModel::unsetChangeLogUnitID(); }
