@@ -2399,4 +2399,19 @@ class TimeExpressionParserTest extends TestCase {
 		$this->assertEquals($va_parse[1], "2022.120723595900");	
 		$this->assertEquals($o_tep->getText(), "December 1 – 7 2022");	
 	}
+	
+	public function testMonthHyphenYear() {
+	 	$o_tep = new TimeExpressionParser();
+		$o_tep->setLanguage('en_US');
+		
+		$vb_res = $o_tep->parse('11-1978');
+		$this->assertEquals($vb_res, true);
+		$va_parse = $o_tep->getHistoricTimestamps();
+		
+		$this->assertEquals($va_parse['start'], "1978.110100000000");
+		$this->assertEquals($va_parse['end'], "1978.113023595900");
+		$this->assertEquals($va_parse[0], "1978.110100000000");
+		$this->assertEquals($va_parse[1], "1978.113023595900");	
+		$this->assertEquals($o_tep->getText(), "November 1978");
+	}
 }
