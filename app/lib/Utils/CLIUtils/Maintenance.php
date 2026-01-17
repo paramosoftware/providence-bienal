@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2018-2025 Whirl-i-Gig
+ * Copyright 2018-2026 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -2403,7 +2403,7 @@ trait CLIUtilsMaintenance {
 	public static function reload_attribute_sortable_values($po_opts=null) {
 		$o_db = new Db();
 		
-		$qr_res = $o_db->query("SELECT count(*) c FROM ca_attribute_values WHERE (value_longtext1 <> '' OR value_decimal1 IS NOT NULL)");
+		$qr_res = $o_db->query("SELECT count(*) c FROM ca_attribute_values");
 		$qr_res->nextRow();
 		$count = $qr_res->get('c');
 		
@@ -2411,16 +2411,21 @@ trait CLIUtilsMaintenance {
 		
 		print CLIProgressBar::start($count, _t('Processing'));
 		do {
-			$qr_res = $o_db->query("SELECT value_id, value_longtext1, value_decimal1, value_decimal2, element_id FROM ca_attribute_values WHERE value_id > ? and (value_longtext1 <> '' OR value_decimal1 IS NOT NULL) ORDER BY value_id LIMIT 10000", [$last_value_id]);
+			$qr_res = $o_db->query("SELECT value_id, value_longtext1, value_decimal1, value_decimal2, element_id FROM ca_attribute_values WHERE value_id > ? ORDER BY value_id LIMIT 10000", [$last_value_id]);
 		
 			$c = 0;
 			while($qr_res->nextRow()) {
-				switch(ca_metadata_elements::getElementDatatype($qr_res->get('element_id'))) {
+				switch($dt = ca_metadata_elements::getElementDatatype($qr_res->get('element_id'))) {
 					case __CA_ATTRIBUTE_VALUE_DATERANGE__:
-						$v = caGetLocalizedHistoricDateRange($qr_res->get('value_decimal1'), $qr_res->get('value_decimal2'));
+						$v = $qr_res->get('value_longtext1');
+						if(!$v) { $v = _t('undated'); }
 						break;
 					default:
 						$v = $qr_res->get('value_longtext1');
+						if(!$v) { 
+							print CLIProgressBar::next();
+							continue(2); 
+						}
 						break;
 				}
 				$value_id = $qr_res->get('value_id');
