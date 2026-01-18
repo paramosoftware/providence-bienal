@@ -1,13 +1,13 @@
 <?php
 /* ----------------------------------------------------------------------
- * app/controllers/lookup/ObjectLotController.php : 
+ * lookup/object_lot_hierarchy_level_json.php : 
  * ----------------------------------------------------------------------
  * CollectiveAccess
  * Open-source collections management software
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2009-2026 Whirl-i-Gig
+ * Copyright 2026 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -25,13 +25,4 @@
  *
  * ----------------------------------------------------------------------
  */
-require_once(__CA_LIB_DIR__."/BaseLookupController.php");
-
-class ObjectLotController extends BaseLookupController {
-	# -------------------------------------------------------
-	protected $opb_uses_hierarchy_browser = false;
-	protected $ops_table_name = 'ca_object_lots';		// name of "subject" table (what we're editing)
-	protected $ops_name_singular = 'object lot';
-	protected $ops_search_class = 'ObjectLotSearch';
-	# -------------------------------------------------------
-}
+print json_encode($this->getVar('object_lot_list'));
