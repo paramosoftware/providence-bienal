@@ -62,6 +62,7 @@ class VersionUpdate209 extends BaseVersionUpdater {
 			if(!$l->update()) {
 				$this->err_count++;
 			}
+			$l->rebuildHierarchicalIndex();
 		}
 		
 		return $ret;
