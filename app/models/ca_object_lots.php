@@ -59,7 +59,7 @@ BaseModel::$s_ca_models_definitions['ca_object_lots'] = array(
 			'IS_NULL' => false, 
 			'DEFAULT' => '',
 			'DONT_INCLUDE_IN_SEARCH_FORM' => true,
-			'LABEL' => 'Object hierarchy', 'DESCRIPTION' => 'Identifier of lot that is root of the object hierarchy.'
+			'LABEL' => 'Object lot hierarchy', 'DESCRIPTION' => 'Identifier of lot that is root of the object lot hierarchy.'
 		),
 		'type_id' => array(
 			'FIELD_TYPE' => FT_NUMBER, 'DISPLAY_TYPE' => DT_SELECT, 
