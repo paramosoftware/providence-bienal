@@ -598,7 +598,24 @@ class BundlableLabelableBaseModelWithAttributes extends LabelableBaseModelWithAt
 		}
 		
 		if (isset($pa_options['user_id']) && $pa_options['user_id'] && $t_dupe->hasField('user_id')) { $t_dupe->set('user_id', $pa_options['user_id']); }
-		
+
+		// Only handle tables that actually have a 'set_code' field (eg. ca_sets)
+		if ($t_dupe->hasField('set_code')) {
+			$vs_code = trim((string)$this->get('set_code'));
+			if (!$vs_code) { $vs_code = 'set'; }
+
+			$vn_i = 1;
+			$t_lookup = Datamodel::getInstanceByTableName($table, true);
+
+			do {
+				$vs_new_code = $vs_code . '_' . $vn_i;
+				$vn_i++;
+				$t_lookup->clear(); // avoid stale state between loads
+			} while ($t_lookup->load(['set_code' => $vs_new_code]));
+
+			$t_dupe->set('set_code', $vs_new_code);
+		}
+
 		$t_dupe->insert(['forDuplication' => true]);
 		
 		if ($t_dupe->numErrors()) {
