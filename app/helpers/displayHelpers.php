@@ -5470,7 +5470,6 @@ function caDragAndDropSortingForHierarchyEnabled(RequestHTTP $request, string $t
 function caGetHierarchyBrowserSortValues(string $table, ?BaseModel $t_instance=null) : ?array {
 	$o_config = Configuration::load();
 	$sort_value = null;
-	
 	if($t_instance && $t_instance->isLoaded() && ($sort_element = $o_config->get("{$table}_hierarchy_browser_use_for_sort"))){
 		$itable = $t_instance->tableName();
 		if(is_array($ancestor_ids = $t_instance->getHierarchyAncestors(null, ['idsOnly' => true, 'includeSelf' => true])) && sizeof($ancestor_ids)) {
@@ -5478,7 +5477,6 @@ function caGetHierarchyBrowserSortValues(string $table, ?BaseModel $t_instance=n
 			if($qr = caMakeSearchResult($t_instance->tableName(), $ancestor_ids)) {
 				while($qr->nextHit()) {
 					if(($sort_value = $qr->get("{$itable}.{$sort_element}", ['convertCodesToValue' => true]))) {
-						error_log("got $sort_value for $sort_element");
 						return [$sort_value];
 						break;
 					}
