@@ -7,7 +7,7 @@
  * ----------------------------------------------------------------------
  *
  * Software by Whirl-i-Gig (http://www.whirl-i-gig.com)
- * Copyright 2008-2025 Whirl-i-Gig
+ * Copyright 2008-2026 Whirl-i-Gig
  *
  * For more information visit http://www.CollectiveAccess.org
  *
@@ -652,7 +652,9 @@ class BundlableLabelableBaseModelWithAttributes extends LabelableBaseModelWithAt
 			if (sizeof($va_duplicate_element_settings)) {
 				$va_attrs_to_duplicate = [];
 				foreach($va_duplicate_element_settings as $vs_bundle => $vn_duplication_setting) {
-					$va_attrs_to_duplicate[] = caConvertBundleNameToCode($vs_bundle, ['includeTablePrefix' => true]);
+					if($vn_duplication_setting > 0) {
+						$va_attrs_to_duplicate[] = caConvertBundleNameToCode($vs_bundle, ['includeTablePrefix' => true]);
+					}
 				}
 			}
 
