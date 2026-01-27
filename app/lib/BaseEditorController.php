@@ -170,7 +170,17 @@ class BaseEditorController extends ActionController {
 		// get default screen
 		//
 		if (!($type_id = $t_subject->getTypeID())) {
-			if (!($type_ids = caMakeTypeIDList($this->ops_table_name, [$type = $this->request->getParameter($t_subject->getTypeFieldName(), pString)]))) {
+			$type = $this->request->getParameter($t_subject->getTypeFieldName() ?? 'type_id', pString);
+			switch($this->ops_table_name) {
+				case 'ca_relationship_types':
+					$t_rel = new ca_relationship_types($type);
+					$type_ids = $t_rel->isLoaded() ? [$t_rel->get('type_id')] : null; 
+					break;
+				default:
+					$type_ids = caMakeTypeIDList($this->ops_table_name, [$type]);
+					break;
+			}
+			if (!$type_ids) {
 				$type_id = null;
 			} else {
 				$type_id = array_shift($type_ids);
