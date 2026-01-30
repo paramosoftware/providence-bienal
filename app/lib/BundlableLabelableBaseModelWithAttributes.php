@@ -3243,7 +3243,7 @@ class BundlableLabelableBaseModelWithAttributes extends LabelableBaseModelWithAt
 					}
 					break;
 			}
-			if (!$va_info['NODE']['parent_id']) { continue; } // TODO: do we need an option to control visibility of root?
+			if (($vs_hierarchy_type !== __CA_HIER_TYPE_ADHOC_MONO__) && !$va_info['NODE']['parent_id']) { continue; } // TODO: do we need an option to control visibility of root?
 			
 			$vn_locale_id = isset($va_info['NODE']['locale_id']) ? $va_info['NODE']['locale_id'] : null;
 			$va_ancestor = array(
