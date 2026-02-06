@@ -81,7 +81,7 @@ class BaseEditorController extends ActionController {
 		//
 		// Are we duplicating?
 		//
-		if (($vs_mode == 'dupe') && $this->request->user->canDoAction('can_duplicate_'.$t_subject->tableName())) {
+		if (($vs_mode == 'dupe') && $this->request->user->canDoAction('can_duplicate_'.$t_subject->tableName()) && $t_subject->isLoaded()) {
 			if (!caValidateCSRFToken($this->request, null, ['notifications' => $this->notification])) {
 				throw new ApplicationException(_t('CSRF check failed'));
 				return;
@@ -1241,7 +1241,7 @@ class BaseEditorController extends ActionController {
 		if (!$vn_subject_id || !$t_subject->load($vn_subject_id)) {
 			// empty (ie. new) rows don't have a type_id set, which means we'll have no idea which attributes to display
 			// so we get the type_id off of the request
-			if (!($type_ids = caMakeTypeIDList($this->ops_table_name, [$this->request->getParameter($t_subject->getTypeFieldName(), pString)]))) {
+			if (!($type_ids = caMakeTypeIDList($this->ops_table_name, [$this->request->getParameter($t_subject->getTypeFieldName(), pString)], ['includeSubtypes' => false]))) {
 				$type_id = null;
 			} else {
 				$type_id = array_shift($type_ids);
