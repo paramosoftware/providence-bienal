@@ -876,80 +876,80 @@ function _caFormatMediaMetadataArray($pa_array, $pn_level=0, $ps_key=null, ?arra
 /**
  * Generates next/previous/back-to-results navigation HTML for bundleable editors
  *
- * @param $po_request RequestHTTP The current request
- * @param $po_instance BaseModel An instance containing the currently edited record
- * @param $po_result_context ResultContext The current result content
- * @param $pa_options array An optional array of options. Supported options are:
+ * @param $request RequestHTTP The current request
+ * @param $instance BaseModel An instance containing the currently edited record
+ * @param $result_context ResultContext The current result content
+ * @param $options array An optional array of options. Supported options are:
  *		backText = a string to use as the "back" button text; default is "Results"
  *
  * @return string HTML implementing the navigation element
  */
-function caEditorFindResultNavigation($po_request, $po_instance, $po_result_context, $pa_options=null) {
-	$vn_item_id 			= $po_instance->getPrimaryKey();
-	$vs_pk 					= $po_instance->primaryKey();
-	$vs_table_name			= $po_instance->tableName();
-	if (($vs_priv_table_name = $vs_table_name) == 'ca_list_items') {
-		$vs_priv_table_name = 'ca_lists';
+function caEditorFindResultNavigation($request, $instance, $result_context, $options=null) {
+	$item_id 			= $instance->getPrimaryKey();
+	$pk 				= $instance->primaryKey();
+	$table_name			= $instance->tableName();
+	if (($priv_table_name = $table_name) == 'ca_list_items') {
+		$priv_table_name = 'ca_lists';
 	}
 
-	$va_found_ids 			= $po_result_context->getResultList();
-	$vn_current_pos			= $po_result_context->getIndexInResultList($vn_item_id);
-	$vn_prev_id 			= $po_result_context->getPreviousID($vn_item_id);
-	$vn_next_id 			= $po_result_context->getNextID($vn_item_id);
+	$found_ids 			= $result_context->getResultList();
+	$current_pos		= $result_context->getIndexInResultList($item_id);
+	$prev_id 			= $result_context->getPreviousID($item_id);
+	$next_id 			= $result_context->getNextID($item_id);
 
-	if (isset($pa_options['backText']) && $pa_options['backText']) {
-		$vs_back_text = $pa_options['backText'];
+	if (isset($options['backText']) && $options['backText']) {
+		$back_text = $options['backText'];
 	} else {
-		$vs_back_text = "<span class='resultLink'>"._t('Results')."</span>";
+		$back_text = "<span class='resultLink'>"._t('Results')."</span>";
 	}
 
-	$vs_buf = '';
-	if (is_array($va_found_ids) && sizeof($va_found_ids)) {
-		$default_to_summary_view_conf = $po_request->config->getList("{$vs_table_name}_editor_defaults_to_summary_view");
+	$buf = '';
+	if ($item_id && is_array($found_ids) && sizeof($found_ids)) {
+		$default_to_summary_view_conf = $request->config->getList("{$table_name}_editor_defaults_to_summary_view");
 		if(is_array($default_to_summary_view_conf) && sizeof($default_to_summary_view_conf)) {
-			$t_table = Datamodel::getInstance($vs_table_name, true);
-			$t_ui = ca_editor_uis::loadDefaultUI($vs_table_name, $po_request, $t_table->getTypeID($vn_item_id));
+			$t_table = Datamodel::getInstance($table_name, true);
+			$t_ui = ca_editor_uis::loadDefaultUI($table_name, $request, $t_table->getTypeID($item_id));
 			$default_to_summary_view = $t_ui ? in_array($t_ui->get('editor_code'), $default_to_summary_view_conf, true) : false;
 		} else {
-			$default_to_summary_view = (bool)$po_request->config->get("{$vs_table_name}_editor_defaults_to_summary_view");
+			$default_to_summary_view = (bool)$request->config->get("{$table_name}_editor_defaults_to_summary_view");
 		}
-		if ($vn_prev_id > 0) {
+		if ($prev_id > 0) {
 			if(
-				$po_request->user->canAccess($po_request->getModulePath(),$po_request->getController(),"Edit",array($vs_pk => $vn_prev_id))
+				$request->user->canAccess($request->getModulePath(),$request->getController(),"Edit",array($pk => $prev_id))
 				&&
 				!$default_to_summary_view
 			){
-				$vs_buf .= caNavLink($po_request, caNavIcon(__CA_NAV_ICON_SCROLL_LT__, 2), 'prev record', $po_request->getModulePath(), $po_request->getController(), 'Edit'.'/'.$po_request->getActionExtra(), array($vs_pk => $vn_prev_id)).'&nbsp;';
+				$buf .= caNavLink($request, caNavIcon(__CA_NAV_ICON_SCROLL_LT__, 2), 'prev record', $request->getModulePath(), $request->getController(), 'Edit'.'/'.$request->getActionExtra(), array($pk => $prev_id)).'&nbsp;';
 			} else {
-				$vs_buf .= caNavLink($po_request, caNavIcon(__CA_NAV_ICON_SCROLL_LT__, 2), 'prev record', $po_request->getModulePath(), $po_request->getController(), 'Summary', array($vs_pk => $vn_prev_id)).'&nbsp;';
+				$buf .= caNavLink($request, caNavIcon(__CA_NAV_ICON_SCROLL_LT__, 2), 'prev record', $request->getModulePath(), $request->getController(), 'Summary', array($pk => $prev_id)).'&nbsp;';
 			}
 			TooltipManager::add(".prev.record", "Previous"); 
 		} else {
-			$vs_buf .=  '<span class="prev disabled">'.caNavIcon(__CA_NAV_ICON_SCROLL_LT__, 2).'</span>';
+			$buf .=  '<span class="prev disabled">'.caNavIcon(__CA_NAV_ICON_SCROLL_LT__, 2).'</span>';
 		}
 
-		$vs_buf .= "<span class='resultCount'>".ResultContext::getResultsLinkForLastFind($po_request, $vs_table_name,  $vs_back_text, ''). " (".($vn_current_pos)."/".sizeof($va_found_ids).")</span>";
+		$buf .= "<span class='resultCount'>".ResultContext::getResultsLinkForLastFind($request, $table_name,  $back_text, ''). " (".($current_pos)."/".sizeof($found_ids).")</span>";
 
-		if (!$vn_next_id && sizeof($va_found_ids)) { $vn_next_id = $va_found_ids[0]; }
-		if ($vn_next_id > 0) {
+		if (!$next_id && sizeof($found_ids)) { $next_id = $found_ids[0]; }
+		if ($next_id > 0) {
 			if(
-				$po_request->user->canAccess($po_request->getModulePath(),$po_request->getController(),"Edit",array($vs_pk => $vn_next_id))
+				$request->user->canAccess($request->getModulePath(),$request->getController(),"Edit",array($pk => $next_id))
 				&&
 				!$default_to_summary_view
 			){
-				$vs_buf .= '&nbsp;'.caNavLink($po_request,caNavIcon(__CA_NAV_ICON_SCROLL_RT__, 2), 'next record', $po_request->getModulePath(), $po_request->getController(), 'Edit'.'/'.$po_request->getActionExtra(), array($vs_pk => $vn_next_id));
+				$buf .= '&nbsp;'.caNavLink($request,caNavIcon(__CA_NAV_ICON_SCROLL_RT__, 2), 'next record', $request->getModulePath(), $request->getController(), 'Edit'.'/'.$request->getActionExtra(), array($pk => $next_id));
 			} else {
-				$vs_buf .= '&nbsp;'.caNavLink($po_request,caNavIcon(__CA_NAV_ICON_SCROLL_RT__, 2), 'next record', $po_request->getModulePath(), $po_request->getController(), 'Summary', array($vs_pk => $vn_next_id));
+				$buf .= '&nbsp;'.caNavLink($request,caNavIcon(__CA_NAV_ICON_SCROLL_RT__, 2), 'next record', $request->getModulePath(), $request->getController(), 'Summary', array($pk => $next_id));
 			}
 			TooltipManager::add(".next.record", "Next");
 		} else {
-			$vs_buf .=  '<span class="next disabled">'.caNavIcon(__CA_NAV_ICON_SCROLL_RT__, 2).'</span>';
+			$buf .=  '<span class="next disabled">'.caNavIcon(__CA_NAV_ICON_SCROLL_RT__, 2).'</span>';
 		}
-	} elseif ($vn_item_id) {
-		$vs_buf .= "<span class='resultCount'>".ResultContext::getResultsLinkForLastFind($po_request, $vs_table_name,  $vs_back_text, '')."</span>";
+	} else {
+		$buf .= "<span class='resultCount'>".ResultContext::getResultsLinkForLastFind($request, $table_name,  $back_text, '')."</span>";
 	}
 
-	return $vs_buf;
+	return $buf;
 }
 # ------------------------------------------------------------------------------------------------
 /**
@@ -1087,10 +1087,7 @@ function caEditorInspector($view, $options=null) {
 	}
 
 	// action extra to preserve currently open screen across next/previous links
-	$buf = '';
-	if (($item_id) || ($view->request->getAction() === 'Delete')) {
-		$buf = "<h3 class='nextPrevious' {$style}>".caEditorFindResultNavigation($view->request, $t_item, $o_result_context, $options)."</h3>\n";
-	}
+	$buf = "<h3 class='nextPrevious' {$style}>".caEditorFindResultNavigation($view->request, $t_item, $o_result_context, $options)."</h3>\n";
 
 	$color = null;
 	if ($t_type) { $color = trim($t_type->get('color')); }
