@@ -576,7 +576,7 @@ class ListAttributeValue extends AuthorityAttributeValue implements IAttributeVa
 		
         $for_search = caGetOption('forSearch', $pa_options, false);
         $for_form = caGetOption('forForm', $pa_options, false);
-		$render_as =($for_search && !$for_form) ? "" : caGetOption('render', $pa_options, caGetOption('render', $pa_element_info['settings'], ''));
+		$render_as = caGetOption('render', $pa_options, caGetOption('render', $pa_element_info['settings'], ''));
 		
 		if (($pa_element_info['parent_id']) && ($render_as == 'checklist')) { $render_as = ''; }	// checklists can only be top-level
 		
